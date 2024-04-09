@@ -1,3 +1,16 @@
+name: "Terraform action"
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+permissions:
+      id-token: write # This is required for aws oidc connection
+      contents: read # This is required for actions/checkout
+      pull-requests: write # This is required for gh bot to comment PR
+env:
+  TF_LOG: INFO
+  AWS_REGION: ${{ secrets.AWS_REGION }}
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -87,7 +100,3 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
-
-      - name: Manual Terraform Destroy
-        if: github.event_name == 'workflow_dispatch'
-        run: terraform destroy -auto-approve
