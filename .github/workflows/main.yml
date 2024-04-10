@@ -104,3 +104,4 @@ jobs:
       - name: Conditional Destroy
         if: steps.destroy.conclusion == 'success'  # Only run if manual destroy step succeeded
         run: terraform destroy --auto-approve
+        
