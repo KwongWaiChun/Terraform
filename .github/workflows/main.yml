@@ -100,7 +100,14 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
-  
+                # Store output variables for use in the destroy job
+        env:
+          AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+          AWS_BUCKET_KEY_NAME: ${{ secrets.AWS_BUCKET_KEY_NAME }}
+        # Store output variables for use in the destroy job
+        outputs:
+          bucket_name: ${{ steps.apply.outputs.AWS_BUCKET_NAME }}
+          bucket_key_name: ${{ steps.apply.outputs.AWS_BUCKET_KEY_NAME }}
   
   destroy:
     needs: deploy
@@ -127,3 +134,6 @@ jobs:
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve -input=false
+        env:
+          AWS_BUCKET_NAME: ${{ needs.deploy.outputs.bucket_name }}
+          AWS_BUCKET_KEY_NAME: ${{ needs.deploy.outputs.bucket_key_name }}
