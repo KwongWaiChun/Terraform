@@ -1,5 +1,16 @@
 name: "Terraform action"
 on:
+  workflow_dispatch:
+    inputs:
+      terraform_operation:
+        description: "Terraform operation: plan, apply, destroy"
+        required: true
+        default: "plan"
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
   push:
     branches:
       - main
@@ -12,7 +23,7 @@ env:
   TF_LOG: INFO
   AWS_REGION: ${{ secrets.AWS_REGION }}
 jobs:
-  deploy:
+  terraform_deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -53,7 +64,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
-        if: github.event_name == 'pull_request'
+        if: "${{ github.event.inputs.terraform_operation == 'plan' }}"
         continue-on-error: true
 
       - uses: actions/github-script@v6
@@ -97,7 +108,10 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -input=false
-        
+      - name: Terraform apply
+        run: terraform apply --auto-approve
+        if: "${{ github.event.inputs.terraform_operation == 'apply' }}"
+      
+      - name: Terraform destroy
+        run: terraform destroy --auto-approve
+        if: "${{ github.event.inputs.terraform_operation == 'destroy' }}"
