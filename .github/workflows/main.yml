@@ -4,6 +4,7 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:  # Manually trigger the workflow
 permissions:
       id-token: write # This is required for aws oidc connection
       contents: read # This is required for actions/checkout
@@ -101,7 +102,11 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
   
+      - name: Manual Destroy
+        id: destroy
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo "Manually triggered destruction"
+
       - name: Conditional Destroy
-        if: steps.destroy.conclusion == 'success'  # Only run if manual destroy step succeeded
+        if: steps.destroy.conclusion == 'success' && github.event_name != 'workflow_dispatch'
         run: terraform destroy --auto-approve
-        
