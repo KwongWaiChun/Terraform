@@ -10,4 +10,3 @@ resource "aws_cloudformation_stack" "example" {
 
   # Additional configuration options, if needed
 }
-
