@@ -101,6 +101,6 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
   
-      - name: Manual Destroy
-        if: github.event_name == 'repository_dispatch'
+      - name: Conditional Destroy
+        if: steps.destroy.conclusion == 'success'  # Only run if manual destroy step succeeded
         run: terraform destroy --auto-approve
