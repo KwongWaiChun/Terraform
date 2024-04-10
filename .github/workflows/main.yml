@@ -1,10 +1,25 @@
 name: "Terraform action"
 on:
+  workflow_dispatch:
+    inputs:
+      # Working directory input from user.
+      resource:
+        type: choice
+        description: Choose the resource
+        options:
+        - name_of_dir1
+        - name_of_dir2
+      # Terraform action you want to perform
+      action:
+        description: 'Terraform Action to Perform'
+        type: choice
+        options:
+        - Terraform_apply
+        - Terraform_destroy
   push:
     branches:
       - main
   pull_request:
-  workflow_dispatch:  # Manually trigger the workflow
 permissions:
       id-token: write # This is required for aws oidc connection
       contents: read # This is required for actions/checkout
@@ -102,11 +117,31 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
   
-      - name: Manual Destroy
-        id: destroy
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: echo "Manually triggered destruction"
+  terraform_destroy:
+    name: "Terraform_destroy"
+    if: ${{ github.event.inputs.action == 'Terraform_destroy' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.event.inputs.resource }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      - name: Conditional Destroy
-        if: steps.destroy.conclusion == 'success' && github.event_name != 'workflow_dispatch'
-        run: terraform destroy --auto-approve
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Terraform Init
+        id: init
+        env:
+          AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+          AWS_BUCKET_KEY_NAME: ${{ secrets.AWS_BUCKET_KEY_NAME }}
+      
+      - name: Terraform Destroy
+        id: destroy
+        working-directory: ${{ github.event.inputs.resource }}
+        run: terraform destroy -auto-approve -var-file=variables.tfvars
+        env:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_DEFAULT_REGION: ${{ secrets.REGION }}
