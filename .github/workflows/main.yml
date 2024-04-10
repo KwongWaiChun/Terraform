@@ -18,9 +18,6 @@ jobs:
       run:
         shell: bash
         working-directory: .
-    outputs:
-      bucket_name: ${{ steps.apply.outputs.bucket_name }}
-      bucket_key_name: ${{ steps.apply.outputs.bucket_key_name }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -101,40 +98,9 @@ jobs:
         run: exit 1
 
       - name: Terraform Apply
-        id: apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
-        env:
-          AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
-          AWS_BUCKET_KEY_NAME: ${{ secrets.AWS_BUCKET_KEY_NAME }}
-        # Store output variables for use in the destroy job
-        continue-on-error: true
   
-  destroy:
-    needs: deploy
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-        working-directory: .
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v3
-
-      - name: Configure AWS credentials from AWS account
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE }}
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-session-name: GitHub-OIDC-TERRAFORM
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.2.5
-
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve -input=false
-        env:
-          AWS_BUCKET_NAME: ${{ needs.deploy.outputs.bucket_name }}
-          AWS_BUCKET_KEY_NAME: ${{ needs.deploy.outputs.bucket_key_name }}
+      - name: Manual Destroy
+        if: github.event_name == 'repository_dispatch'
+        run: terraform destroy --auto-approve
