@@ -1,0 +1,300 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  VpcCIDR:
+    Type: String
+    Description: CIDR block for the VPC
+    Default: "10.0.0.0/16"
+  PublicSubnet1CIDR:
+    Type: String
+    Description: CIDR block for the public subnet 1
+    Default: "10.0.1.0/24"
+  PublicSubnet2CIDR:
+    Type: String
+    Description: CIDR block for the public subnet 2
+    Default: "10.0.2.0/24"
+  PrivateSubnet1CIDR:
+    Type: String
+    Description: CIDR block for the private subnet 1
+    Default: "10.0.4.0/22"
+  PrivateSubnet2CIDR:
+    Type: String
+    Description: CIDR block for the private subnet 2
+    Default: "10.0.8.0/22"
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: Terraform-VPC
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet1CIDR
+      AvailabilityZone: "us-east-1a"
+      Tags:
+        - Key: Name
+          Value: PublicSubnet1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet2CIDR
+      AvailabilityZone: "us-east-1b"
+      Tags:
+        - Key: Name
+          Value: PublicSubnet2
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      AvailabilityZone: "us-east-1a"
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet1
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      AvailabilityZone: "us-east-1b"
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet2
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: InternetGateway
+  
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: com.amazonaws.us-east-1.s3
+      VpcId: !Ref VPC
+      RouteTableIds:
+        - !Ref PrivateRouteTable1
+        - !Ref PrivateRouteTable2
+
+  InternetGatewayAttachment1:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable1
+
+  PublicRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable2
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PrivateRouteTable1
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: PrivateRouteTable2
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable2
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+
+  PublicRouteTable1DefaultRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable1
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  PublicRouteTable2DefaultRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable2
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  AuroraSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Aurora security group
+      VpcId: !Ref VPC
+
+  AuroraSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref AuroraSecurityGroup
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      CidrIp: 0.0.0.0/0
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: auroradb-SubnetGroup
+      DBSubnetGroupDescription: "Subnet group for Aurora DB"
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2  
+  
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+        GroupDescription: bastion host security group
+        GroupName: BastionHostSecurityGroup
+        VpcId: !Ref VPC
+        SecurityGroupIngress: 
+          - 
+            CidrIp: 0.0.0.0/0
+            FromPort: 22
+            IpProtocol: tcp
+            ToPort: 22
+        SecurityGroupEgress: 
+          - 
+            CidrIp: 0.0.0.0/0
+            IpProtocol: -1
+
+  EC2Instance1EIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  EC2Instance1EIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref EC2Instance1
+      EIP: !Ref EC2Instance1EIP
+
+  EC2Instance1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-06b09bfacae1453cb
+      InstanceType: t2.micro
+      KeyName: vockey
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: false
+          DeviceIndex: 0
+          SubnetId: !Ref PublicSubnet1
+          DeleteOnTermination: true
+          GroupSet:
+            - !Ref EC2SecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            Encrypted: false
+            VolumeSize: 8
+            SnapshotId: snap-0ad2348eab4dde717
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: BastionHost1
+
+  EC2Instance2EIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  EC2Instance2EIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref EC2Instance2
+      EIP: !Ref EC2Instance2EIP
+
+  EC2Instance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-06b09bfacae1453cb
+      InstanceType: t2.micro
+      KeyName: vockey
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: false
+          DeviceIndex: 0
+          SubnetId: !Ref PublicSubnet2
+          DeleteOnTermination: true
+          GroupSet:
+            - !Ref EC2SecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            Encrypted: false
+            VolumeSize: 8
+            SnapshotId: snap-0ad2348eab4dde717
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: BastionHost2
+
+  AuroraCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: aurora-mysql
+      EngineMode: serverless
+      EngineVersion: 5.7.mysql_aurora.2.07.1
+      DatabaseName: MyDatabase
+      MasterUsername: admin
+      MasterUserPassword: admin123
+      EnableHttpEndpoint: true
+      ScalingConfiguration:
+        AutoPause: true
+        MaxCapacity: 16
+        MinCapacity: 2
+        SecondsUntilAutoPause: 300
+        TimeoutAction: ForceApplyCapacityChange
+      StorageEncrypted: true
+      DBSubnetGroupName:
+        Ref: DBSubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref AuroraSecurityGroup
