@@ -50,9 +50,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init -input=false -backend-config="prefix=terraform-demo" -backend-config="bucket=tf-state-storage-2023"
-        ### terraform init -input=false -backend-config="bucket=${GCP_BUCKET_NAME}" -backend-config="prefix={{GCP_SERVICE_URL}}"
-        ### run: terraform init -backend-config="bucket=${GCP_BUCKET_NAME}" -backend-config="key=${GCP_BUCKET_KEY_NAME}" -backend-config="region=${GCP_REGION}"
+        run: terraform init -input=false -backend-config="bucket=${GCP_BUCKET_NAME}" -backend-config="prefix={{GCP_SERVICE_URL}}"
 
       - name: Terraform Validate
         id: validate
