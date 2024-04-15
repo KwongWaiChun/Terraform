@@ -17,7 +17,8 @@ permissions:
       pull-requests: write # This is required for gh bot to comment PR
 env:
   TF_LOG: INFO
-  GCP_REGION: ${{ secrets.GCP_REGION }}
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_ZONE: ${{ secrets.GCP_ZONE }}
 jobs:
   terraform_deploy:
     runs-on: ubuntu-latest
@@ -31,12 +32,16 @@ jobs:
 
 
       - id: auth
-        name: Authenticate to Google Cloud
+        name: Authenticate to GCP
         uses: google-github-actions/auth@v1.0.0
         with:
-          token_format: "access_token"
-          workload_identity_provider: ${{ secrets.IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.SERVICE_ACCOUNT }}
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_ID }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: List Instances
+        run: |-
+          gcloud compute instances list --project $PROJECT_ID --zone $GCP_ZONE
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
