@@ -36,12 +36,18 @@ jobs:
         uses: google-github-actions/auth@v1.0.0
         with:
           token_format: access_token
+          create_credentials_file: true
+          activate_credentials_file: true
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_ID }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          access_token_lifetime: '100s'
 
-      - name: List Instances
-        run: |-
-          gcloud compute instances list --project $PROJECT_ID --zone $GCP_ZONE
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.3.0
+      - name: set crdential_file
+        run: gcloud auth login --cred-file=${{steps.auth.outputs.credentials_file_path}}
+      - name: Run gcloud
+        run: gcloud compute instances list --project ${{ GCP_PROJECT_ID }} --zones ${{ GCP_ZONE }}
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
