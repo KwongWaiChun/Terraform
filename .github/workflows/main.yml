@@ -42,12 +42,11 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           access_token_lifetime: '100s'
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0.3.0
-      - name: set crdential_file
-        run: gcloud auth login --cred-file=${{steps.auth.outputs.credentials_file_path}}
-      - name: Run gcloud
-        run: gcloud compute instances list --zones ${{ secrets.GCP_ZONE }}
+      - id: 'gcloud'
+        name: 'gcloud'
+        run: |-
+          gcloud auth login --brief --cred-file="${{ steps.auth.outputs.credentials_file_path }}"
+          gcloud services list
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
