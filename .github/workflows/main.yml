@@ -1,4 +1,4 @@
-name: "Terraform action"
+name: "GCP Terraform action"
 on:
   workflow_dispatch:
     inputs:
@@ -8,9 +8,9 @@ on:
         default: "plan"
         type: choice
         options:
-          - plan
-          - apply
-          - destroy
+          - GCP plan
+          - GCP apply
+          - GCP destroy
 permissions:
       id-token: write # This is required for aws oidc connection
       contents: read # This is required for actions/checkout
@@ -20,7 +20,7 @@ env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_ZONE: ${{ secrets.GCP_ZONE }}
 jobs:
-  terraform_deploy:
+  GCP_terraform_deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
