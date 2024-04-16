@@ -47,7 +47,7 @@ jobs:
       - name: set crdential_file
         run: gcloud auth login --cred-file=${{steps.auth.outputs.credentials_file_path}}
       - name: Run gcloud
-        run: gcloud compute instances list --project ${{ GCP_PROJECT_ID }} --zones ${{ GCP_ZONE }}
+        run: gcloud compute instances list --project ${{ secrets.GCP_PROJECT_ID }} --zones ${{ secrets.GCP_ZONE }}
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
