@@ -35,18 +35,15 @@ jobs:
         name: Authenticate to GCP
         uses: google-github-actions/auth@v1.0.0
         with:
-          token_format: access_token
           create_credentials_file: true
-          activate_credentials_file: true
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_ID }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          access_token_lifetime: '100s'
 
       - id: 'gcloud'
         name: 'gcloud'
         run: |-
           gcloud auth login --brief --cred-file="${{ steps.auth.outputs.credentials_file_path }}"
-          gcloud services list
+          gcloud services list --project Terraform
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -60,7 +57,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init -input=false -backend-config="bucket=${GCP_BUCKET_NAME}" -backend-config="prefix={{GCP_SERVICE_URL}}"
+        run: terraform init -input=false -backend-config="bucket=${GCP_BUCKET_NAME}" -backend-config="region=us"
 
       - name: Terraform Validate
         id: validate
