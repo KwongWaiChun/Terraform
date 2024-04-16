@@ -57,6 +57,8 @@ jobs:
 
       - name: Terraform Init
         id: init
+        env:
+          GCP_BUCKET_NAME: ${{ secrets.GCP_BUCKET_NAME }}
         run: terraform init -input=false -backend-config="bucket=${GCP_BUCKET_NAME}"
 
       - name: Terraform Validate
