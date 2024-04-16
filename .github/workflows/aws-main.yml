@@ -60,7 +60,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
-        if: "${{ github.event.inputs.terraform_operation == 'plan' }}"
+        if: "${{ github.event.inputs.terraform_operation == 'AWS plan' }}"
         continue-on-error: true
 
       - uses: actions/github-script@v6
@@ -106,8 +106,8 @@ jobs:
 
       - name: Terraform apply
         run: terraform apply --auto-approve
-        if: "${{ github.event.inputs.terraform_operation == 'apply' }}"
+        if: "${{ github.event.inputs.terraform_operation == 'AWS apply' }}"
       
       - name: Terraform destroy
         run: terraform destroy --auto-approve
-        if: "${{ github.event.inputs.terraform_operation == 'destroy' }}"
+        if: "${{ github.event.inputs.terraform_operation == 'AWS destroy' }}"
