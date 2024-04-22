@@ -32,11 +32,11 @@ resource "kubernetes_deployment_v1" "default" {
 
       spec {
         container {
-          image = "us-docker.pkg.dev/google-samples/containers/gke/hello-app:2.0"
+          image = "kwongwaichun/project"
           name  = "hello-app-container"
 
           port {
-            container_port = 8080
+            container_port = 5000
             name           = "hello-app-svc"
           }
 
