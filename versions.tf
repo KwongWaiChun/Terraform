@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-variable "project_id" {
-  description = "The project ID to host the cluster in"
-}
-
-variable "region" {
-  description = "The region the cluster in"
-  default     = "us-central1"
+terraform {
+  required_providers {
+    google = {
+      source = "hashicorp/google"
+    }
+    kubernetes = {
+      source = "hashicorp/kubernetes"
+    }
+  }
+  required_version = ">= 0.13"
 }
