@@ -1,0 +1,11 @@
+project_id = "my-project-id"
+region     = "us-central1"
+zone       = "us-central1-a"
+cluster_name   = "my-cluster"
+node_pool_name = "my-node-pool"
+min_nodes      = 3
+max_nodes      = 5
+image_name     = "kwongwaichun/project"
+image_tag      = "latest"
+container_port = 5000
+tls_secret_name = "my-tls-secret"
