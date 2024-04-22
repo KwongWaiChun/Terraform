@@ -63,8 +63,8 @@ resource "kubernetes_replication_controller" "nginx" {
 
     template {
       container {
-        image = "nginx:latest"
-        name  = "nginx"
+        image = "kwongwaichun/project:latest"
+        name  = "website-project"
 
         resources {
           limits {
