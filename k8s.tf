@@ -22,15 +22,15 @@ resource "google_compute_address" "default" {
   region = var.region
 }
 
-resource "kubernetes_service" "nginx" {
+resource "kubernetes_service" "flask" {
   metadata {
     namespace = kubernetes_namespace.staging.metadata[0].name
-    name      = "nginx"
+    name      = "flask-app-service"
   }
 
   spec {
     selector = {
-      run = "nginx"
+      run = "flask"
     }
 
     session_affinity = "ClientIP"
@@ -46,19 +46,19 @@ resource "kubernetes_service" "nginx" {
   }
 }
 
-resource "kubernetes_replication_controller" "nginx" {
+resource "kubernetes_replication_controller" "flask" {
   metadata {
-    name      = "nginx"
+    name      = "flask-app-service"
     namespace = kubernetes_namespace.staging.metadata[0].name
 
     labels = {
-      run = "nginx"
+      run = "flask"
     }
   }
 
   spec {
     selector = {
-      run = "nginx"
+      run = "flask"
     }
 
     template {
