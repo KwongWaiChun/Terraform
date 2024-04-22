@@ -22,23 +22,23 @@ resource "google_compute_address" "default" {
   region = var.region
 }
 
-resource "kubernetes_service" "flask" {
+resource "kubernetes_service" "nginx" {
   metadata {
     namespace = kubernetes_namespace.staging.metadata[0].name
-    name      = "flask-app-service"
+    name      = "nginx"
   }
 
   spec {
     selector = {
-      run = "flask"
+      run = "nginx"
     }
 
     session_affinity = "ClientIP"
 
     port {
       protocol    = "TCP"
-      port        = 5000
-      target_port = 5000
+      port        = 80
+      target_port = 80
     }
 
     type             = "LoadBalancer"
@@ -46,25 +46,25 @@ resource "kubernetes_service" "flask" {
   }
 }
 
-resource "kubernetes_replication_controller" "flask" {
+resource "kubernetes_replication_controller" "nginx" {
   metadata {
-    name      = "flask-app-service"
+    name      = "nginx"
     namespace = kubernetes_namespace.staging.metadata[0].name
 
     labels = {
-      run = "flask"
+      run = "nginx"
     }
   }
 
   spec {
     selector = {
-      run = "flask"
+      run = "nginx"
     }
 
     template {
       container {
-        image = "kwongwaichun/project:latest"
-        name  = "website-project"
+        image = "kwongwaichun/fyp:latest"
+        name  = "nginx"
 
         resources {
           limits {
