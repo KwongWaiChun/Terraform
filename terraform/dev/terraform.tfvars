@@ -1,0 +1,11 @@
+commit_hash = "${CIRCLE_SHA1}"
+
+db_password = "${DB_PASSWORD_DEV}"
+
+domain = "${ROOT_DOMAIN_NAME_DEV}"
+
+k8s_backend_service_name = "${K8S_BACKEND_SERVICE_NAME}"
+
+k8s_master_allowed_ip = "${K8S_MASTER_ALLOWED_IP}"
+
+project_id = "${GOOGLE_PROJECT_ID_DEV}"

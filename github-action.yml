@@ -1,0 +1,178 @@
+version: 2.1
+
+workflows:
+  test-build-deploy:
+    jobs:
+      - test
+
+      # Push to any non-master branch triggers deployment to `dev` environment:
+      - deploy-dev:
+          requires:
+            - test
+          filters:
+            branches:
+              ignore:
+                - master
+
+      # Uncomment the following blocks to enable test and production environments:
+
+      # Push to master branch triggers deployment to `test` environment:
+      # - deploy-test:
+      #     requires:
+      #       - test
+      #     filters:
+      #       branches:
+      #         only: master
+
+      # Push to master branch triggers deployment to `production` environment, with a further manual approval step in CircleCI UI:
+      # - deploy-prod:
+      #     requires:
+      #       - test
+      #     filters:
+      #       branches:
+      #         only: master
+      #     type: approval
+
+jobs:
+  test:
+\
+
+  deploy-dev:
+    executor: default-executor
+    environment:
+      ENV: dev
+      PROJECT_NAME: gke-dev
+    working_directory: ~/project/terraform/dev
+    steps:
+      - deploy:
+          gcloud_service_key: GCLOUD_SERVICE_KEY_DEV
+          google_project_id: GOOGLE_PROJECT_ID_DEV
+
+  deploy-test:
+    executor: default-executor
+    environment:
+      ENV: test
+      PROJECT_NAME: gke-test
+    working_directory: ~/project/terraform/test
+    steps:
+      - deploy:
+          gcloud_service_key: GCLOUD_SERVICE_KEY_TEST
+          google_project_id: GOOGLE_PROJECT_ID_TEST
+
+  deploy-prod:
+    executor: default-executor
+    environment:
+      ENV: prod
+      PROJECT_NAME: gke-prod
+    working_directory: ~/project/terraform/prod
+    steps:
+      - deploy:
+          gcloud_service_key: GCLOUD_SERVICE_KEY_PROD
+          google_project_id: GOOGLE_PROJECT_ID_PROD
+
+
+executors:
+  default-executor:
+    docker:
+      - image: google/cloud-sdk:alpine
+    environment:
+      CLOUDSDK_CORE_DISABLE_PROMPTS: "1"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcloud-service-key.json
+      TF_IN_AUTOMATION: "true"
+
+commands:
+  deploy:
+    description: Build and push docker image, update infra and kubernetes application
+    parameters:
+      gcloud_service_key:
+        type: env_var_name
+      google_project_id:
+        type: env_var_name
+    steps:
+      # Install deps, checkout repo & setup CLI tools:
+      - checkout:
+          path: ~/project
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache bind-tools docker gettext jq
+            apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community terraform
+            gcloud components install kubectl
+            wget https://github.com/garethr/kubeval/releases/download/0.7.3/kubeval-linux-amd64.tar.gz
+            tar xzvf kubeval-linux-amd64.tar.gz
+            chmod u+x kubeval
+      - run:
+          name: Authenticate Google Cloud client
+          command: |
+            echo ${<< parameters.gcloud_service_key >>} > ${GOOGLE_APPLICATION_CREDENTIALS}
+            gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
+            gcloud config set project ${<< parameters.google_project_id >>}
+      - run:
+          name: Initialize Terraform
+          command: |
+            export SERVICE_NAME=default/gke-$ENV
+            export K8S_BACKEND_SERVICE_NAME=$(gcloud compute backend-services list  \
+              --format=json | jq '.[] | select(.description | fromjson | ."kubernetes.io/service-name" == $service_name) | .name' \
+              --arg service_name "$SERVICE_NAME" --raw-output)
+            envsubst < ./terraform.tfvars.template > ./terraform.tfvars
+            terraform init -input=false
+            terraform validate
+            terraform refresh
+
+      # Build docker image & push to GCR:
+      - setup_remote_docker
+      - run:
+          name: Build Docker image
+          command: |
+            docker build \
+              --build-arg COMMIT_REF=${CIRCLE_SHA1} \
+              --build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
+              -t $(terraform output image_url) ~/project/app
+      - run:
+          name: Push image to Google Container Registry
+          command: |
+            gcloud auth configure-docker
+            docker push $(terraform output image_url)
+
+      # Update infra:
+      - run:
+          name: Initialize, validate and apply Terraform
+          command: |
+            terraform plan -out=/tmp/tfplan -input=false
+            terraform apply -input=false -auto-approve /tmp/tfplan
+            terraform refresh
+
+      # Update Kubernetes application:
+      - run:
+          name: Render Kubernetes template and lint
+          command: |
+            terraform output k8s_rendered_template > k8s.yml
+            ./kubeval k8s.yml
+      - run:
+          name: Authenticate kubectl
+          command: |
+            gcloud container clusters get-credentials $(terraform output cluster_name) --zone $(terraform output cluster_zone)
+      - run:
+          name: Temporarily add CI server to k8s master allowed IPs
+          command: |
+            gcloud container clusters update $(terraform output cluster_name) \
+              --enable-master-authorized-networks \
+              --master-authorized-networks=$(terraform output k8s_master_allowed_ip)/32,$(dig +short myip.opendns.com @resolver1.opendns.com)/32 \
+              --zone=$(terraform output cluster_zone)
+      - run:
+          name: Apply kubectl
+          command: kubectl apply -f k8s.yml && kubectl rollout status deployment/gke-${ENV}
+      - run:
+          name: Remove CI server from k8s master allowed IPs
+          command: |
+            gcloud container clusters update $(terraform output cluster_name) \
+              --enable-master-authorized-networks \
+              --master-authorized-networks=$(terraform output k8s_master_allowed_ip)/32 \
+              --zone=$(terraform output cluster_zone)
+          when: always
+      - run:
+          name: Copy static assets to GCS bucket, invalidate CDN cache
+          command: |
+            gsutil rm $(terraform output static_assets_bucket_url)/** 2> /dev/null || true # Ignore error thrown due to empty bucket on first run
+            gsutil cp -r ../../app/static/** $(terraform output static_assets_bucket_url)
+            gcloud compute url-maps invalidate-cdn-cache $(terraform output urlmap_name) --path "/*" --async
