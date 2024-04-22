@@ -37,8 +37,8 @@ resource "kubernetes_service" "nginx" {
 
     port {
       protocol    = "TCP"
-      port        = 80
-      target_port = 80
+      port        = 5000
+      target_port = 5000
     }
 
     type             = "LoadBalancer"
