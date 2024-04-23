@@ -46,43 +46,35 @@ resource "kubernetes_service" "nginx" {
   }
 }
 
-resource "kubernetes_deployment" "nginx" {
+resource "kubernetes_replication_controller" "nginx" {
   metadata {
     name      = "nginx"
     namespace = kubernetes_namespace.staging.metadata[0].name
+
+    labels = {
+      run = "nginx"
+    }
   }
 
   spec {
-    replicas = 3
-
-    selector {
-      match_labels = {
-        app = "nginx"
-      }
+    selector = {
+      run = "nginx"
     }
 
     template {
-      metadata {
-        labels = {
-          app = "nginx"
-        }
-      }
+      container {
+        image = "kwongwaichun/fyp:latest"
+        name  = "nginx"
 
-      spec {
-        container {
-          image = "kwongwaichun/fyp:latest"
-          name  = "nginx"
+        resources {
+          limits {
+            cpu    = "0.5"
+            memory = "512Mi"
+          }
 
-          resources {
-            limits {
-              cpu    = "0.5"
-              memory = "512Mi"
-            }
-
-            requests {
-              cpu    = "250m"
-              memory = "50Mi"
-            }
+          requests {
+            cpu    = "250m"
+            memory = "50Mi"
           }
         }
       }
