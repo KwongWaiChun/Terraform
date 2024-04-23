@@ -82,6 +82,50 @@ resource "kubernetes_replication_controller" "nginx" {
   }
 }
 
+resource "kubernetes_service" "nginx" {
+  metadata {
+    namespace = kubernetes_namespace.staging.metadata[0].name
+    name      = "nginx"
+  }
+
+  spec {
+    selector = {
+      run = "nginx"
+    }
+
+    session_affinity = "ClientIP"
+
+    port {
+      protocol    = "TCP"
+      port        = 80
+      target_port = 80
+    }
+
+    type             = "LoadBalancer"
+    load_balancer_ip = google_compute_address.default.address
+  }
+}
+
+resource "kubernetes_horizontal_pod_autoscaler" "nginx" {
+  metadata {
+    name      = "nginx"
+    namespace = kubernetes_namespace.staging.metadata[0].name
+  }
+
+  spec {
+    scale_target_ref {
+      api_version = "apps/v1"
+      kind        = "Deployment"
+      name        = kubernetes_deployment.nginx.metadata[0].name
+    }
+
+    min_replicas = 2
+    max_replicas = 10
+
+    target_cpu_utilization_percentage = 80
+  }
+}
+
 output "load-balancer-ip" {
   value = google_compute_address.default.address
 }
