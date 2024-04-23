@@ -1,5 +1,5 @@
 provider "kubernetes" {
-  version = "~> 2.0.2"
+  version = "~> 1.10.0"
   host    = google_container_cluster.default.endpoint
   token   = data.google_client_config.current.access_token
   client_certificate = base64decode(
@@ -98,23 +98,24 @@ resource "kubernetes_horizontal_pod_autoscaler" "nginx" {
 
   spec {
     scale_target_ref {
-      deployment = kubernetes_deployment.nginx.metadata[0].name
+      name       = kubernetes_replication_controller.nginx.metadata[0].name
+      api_version = "apps/v1"
+      kind       = "ReplicationController"
     }
 
     min_replicas = 1
-    max_replicas = 5
+    max_replicas = 10
 
     metrics {
       type = "Resource"
 
       resource {
         name = "cpu"
-        target_average_utilization = 80
+        target_average_utilization = 50
       }
     }
   }
 }
-
 output "load-balancer-ip" {
   value = google_compute_address.default.address
 }
