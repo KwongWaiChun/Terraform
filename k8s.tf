@@ -1,5 +1,5 @@
 provider "kubernetes" {
-  version = "~> 1.10.0"
+  version = "~> 2.0.2"
   host    = google_container_cluster.default.endpoint
   token   = data.google_client_config.current.access_token
   client_certificate = base64decode(
@@ -87,19 +87,33 @@ resource "kubernetes_deployment" "nginx" {
         }
       }
     }
-
-    # Autoscaling configuration
-    autoscaling {
-      enabled = true
-
-      min_replicas = 1
-      max_replicas = 5
-
-      target_cpu_utilization_percentage = 80
-    }
   }
 }
 
+resource "kubernetes_horizontal_pod_autoscaler" "nginx" {
+  metadata {
+    name      = "nginx-autoscaler"
+    namespace = kubernetes_namespace.staging.metadata[0].name
+  }
+
+  spec {
+    scale_target_ref {
+      deployment = kubernetes_deployment.nginx.metadata[0].name
+    }
+
+    min_replicas = 1
+    max_replicas = 5
+
+    metrics {
+      type = "Resource"
+
+      resource {
+        name = "cpu"
+        target_average_utilization = 80
+      }
+    }
+  }
+}
 
 output "load-balancer-ip" {
   value = google_compute_address.default.address
