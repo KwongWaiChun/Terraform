@@ -45,15 +45,6 @@ resource "kubernetes_service" "nginx" {
 }
 
 resource "kubernetes_replication_controller" "nginx" {
-  metadata {
-    name      = "nginx"
-    namespace = kubernetes_namespace.staging.metadata[0].name
-
-    labels = {
-      run = "nginx"
-    }
-  }
-
   spec {
     selector {
       match_labels = {
