@@ -1,14 +1,12 @@
 provider "kubernetes" {
-  version = "~> 1.10.0"
-  host    = google_container_cluster.default.endpoint
-  token   = data.google_client_config.current.access_token
-  client_certificate = base64decode(
-    google_container_cluster.default.master_auth[0].client_certificate,
-  )
-  client_key = base64decode(google_container_cluster.default.master_auth[0].client_key)
-  cluster_ca_certificate = base64decode(
-    google_container_cluster.default.master_auth[0].cluster_ca_certificate,
-  )
+  version = "~> 2.0"
+
+  // Configure the connection to the Kubernetes cluster
+  host                   = google_container_cluster.default.endpoint
+  token                  = data.google_client_config.current.access_token
+  client_certificate     = base64decode(google_container_cluster.default.master_auth[0].client_certificate)
+  client_key             = base64decode(google_container_cluster.default.master_auth[0].client_key)
+  cluster_ca_certificate = base64decode(google_container_cluster.default.master_auth[0].cluster_ca_certificate)
 }
 
 resource "kubernetes_namespace" "staging" {
@@ -82,7 +80,25 @@ resource "kubernetes_replication_controller" "nginx" {
   }
 }
 
+resource "kubernetes_horizontal_pod_autoscaler" "nginx" {
+  metadata {
+    name      = "nginx-autoscaler"
+    namespace = kubernetes_namespace.staging.metadata[0].name
+  }
 
+  spec {
+    scale_target_ref {
+      kind       = "ReplicationController"
+      name       = kubernetes_replication_controller.nginx.metadata[0].name
+      api_version = "v1"
+    }
+
+    min_replicas = 1
+    max_replicas = 10
+
+    target_cpu_utilization_percentage = 50
+  }
+}
 
 output "load-balancer-ip" {
   value = google_compute_address.default.address
