@@ -82,47 +82,26 @@ resource "kubernetes_replication_controller" "nginx" {
   }
 }
 
-resource "kubernetes_service" "nginx" {
-  metadata {
-    namespace = kubernetes_namespace.staging.metadata[0].name
-    name      = "nginx"
+resource "google_container_node_pool" "default" {
+  name       = "default-node-pool"
+  location   = var.region
+  cluster    = google_container_cluster.default.name
+  node_count = 3
+
+  autoscaling {
+    min_node_count = 3
+    max_node_count = 5
   }
 
-  spec {
-    selector = {
-      run = "nginx"
-    }
+  node_config {
+    machine_type = "n1-standard-1"
 
-    session_affinity = "ClientIP"
-
-    port {
-      protocol    = "TCP"
-      port        = 80
-      target_port = 80
-    }
-
-    type             = "LoadBalancer"
-    load_balancer_ip = google_compute_address.default.address
-  }
-}
-
-resource "kubernetes_horizontal_pod_autoscaler" "nginx" {
-  metadata {
-    name      = "nginx"
-    namespace = kubernetes_namespace.staging.metadata[0].name
-  }
-
-  spec {
-    scale_target_ref {
-      api_version = "apps/v1"
-      kind        = "Deployment"
-      name        = kubernetes_deployment.nginx.metadata[0].name
-    }
-
-    min_replicas = 2
-    max_replicas = 10
-
-    target_cpu_utilization_percentage = 80
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/compute",
+      "https://www.googleapis.com/auth/devstorage.read_only",
+      "https://www.googleapis.com/auth/logging.write",
+      "https://www.googleapis.com/auth/monitoring",
+    ]
   }
 }
 
