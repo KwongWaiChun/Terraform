@@ -46,7 +46,7 @@ resource "kubernetes_service" "nginx" {
   }
 }
 
-resource "kubernetes_replication_controller" "nginx" {
+resource "kubernetes_deployment" "nginx" {
   metadata {
     name      = "nginx"
     namespace = kubernetes_namespace.staging.metadata[0].name
@@ -57,28 +57,60 @@ resource "kubernetes_replication_controller" "nginx" {
   }
 
   spec {
-    selector = {
-      run = "nginx"
+    replicas = 3
+
+    selector {
+      match_labels = {
+        App = "nginx"
+      }
     }
 
     template {
-      container {
-        image = "kwongwaichun/fyp:latest"
-        name  = "nginx"
+      metadata {
+        labels = {
+          App = "nginx"
+        }
+      }
 
-        resources {
-          limits {
-            cpu    = "0.5"
-            memory = "512Mi"
-          }
+      spec {
+        container {
+          image = "kwongwaichun/fyp:latest"
+          name  = "nginx"
 
-          requests {
-            cpu    = "250m"
-            memory = "50Mi"
+          resources {
+            limits {
+              cpu    = "1"
+              memory = "256Mi"
+            }
+
+            requests {
+              cpu    = "500m"
+              memory = "128Mi"
+            }
           }
         }
       }
     }
+  }
+}
+
+resource "kubernetes_horizontal_pod_autoscaler" "example" {
+  metadata {
+    name      = "example-hpa"
+    namespace = "default"
+  }
+
+  spec {
+    scale_target_ref {
+      api_version = "apps/v1"
+      kind        = "Deployment"
+      name        = kubernetes_deployment.nginx.metadata.0.name
+    }
+
+    min_replicas = 3
+    max_replicas = 5
+
+    target_cpu_utilization_percentage = 80
   }
 }
 

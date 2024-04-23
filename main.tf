@@ -42,13 +42,6 @@ resource "google_container_cluster" "default" {
   network            = google_compute_subnetwork.default.name
   subnetwork         = google_compute_subnetwork.default.name
 
-  // Autoscaling configuration
-  autoscaling {
-    enable_autoscaling = true
-    min_node_count     = 1
-    max_node_count     = 5
-  }
-
   // Use legacy ABAC until these issues are resolved:
   //   https://github.com/mcuadros/terraform-provider-helm/issues/56
   //   https://github.com/terraform-providers/terraform-provider-kubernetes/pull/73
