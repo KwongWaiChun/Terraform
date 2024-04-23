@@ -32,11 +32,11 @@ resource "kubernetes_deployment_v1" "default" {
 
       spec {
         container {
-          image = "kwongwaichun/project"
+          image = "kwongwaichun/fyp:latest"
           name  = "hello-app-container"
 
           port {
-            container_port = 5000
+            container_port = 80
             name           = "hello-app-svc"
           }
 
