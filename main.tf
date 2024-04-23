@@ -1,3 +1,5 @@
+
+
 # Create a VPC network
 resource "google_compute_network" "vpc_network" {
   name                    = "my-vpc-network"
@@ -25,17 +27,18 @@ resource "google_container_cluster" "gke_cluster" {
   remove_default_node_pool = true
 
   master_auth {
-    username = ""
-    password = ""
+    client_certificate_config {
+      issue_client_certificate = false
+    }
   }
 
   initial_node_count = 1
 
   node_pool {
-    name       = "default-pool"
+    name         = "default-pool"
     machine_type = "n1-standard-2"
     disk_size_gb = 100
-    node_count  = 1
+    node_count   = 1
     autoscaling {
       min_node_count = 1
       max_node_count = 5
@@ -72,20 +75,19 @@ resource "google_container_node_pool" "regional_node_pool" {
 
 # Create a regional forwarding rule for load balancing
 resource "google_compute_forwarding_rule" "lb_forwarding_rule" {
-  name       = "lb-forwarding-rule"
-  region     = "us-central1"
-  ip_protocol = "TCP"
-  port_range = "80-8080"
-  target     = google_container_node_pool.regional_node_pool.self_link
-
+  name             = "lb-forwarding-rule"
+  region           = "us-central1"
+  ip_protocol      = "TCP"
+  port_range       = "80-8080"
+  target           = google_container_node_pool.regional_node_pool.self_link
   load_balancing_scheme = "EXTERNAL"
 }
 
 # Create a health check for load balancing
 resource "google_compute_health_check" "lb_health_check" {
-  name               = "lb-health-check"
-  check_interval_sec = 10
-  timeout_sec        = 5
+  name                = "lb-health-check"
+  check_interval_sec  = 10
+  timeout_sec         = 5
   tcp_health_check {
     port_specification = "USE_SERVING_PORT"
   }
@@ -93,12 +95,8 @@ resource "google_compute_health_check" "lb_health_check" {
 
 # Attach the health check to the load balancer
 resource "google_compute_backend_service" "lb_backend_service" {
-  name = "lb-backend-service"
-
-  health_checks = [
-    google_compute_health_check.lb_health_check.self_link
-  ]
-
+  name            = "lb-backend-service"
+  health_checks   = [google_compute_health_check.lb_health_check.self_link]
   backend {
     group = google_container_node_pool.regional_node_pool.instance_group_urls[0]
   }
@@ -106,8 +104,8 @@ resource "google_compute_backend_service" "lb_backend_service" {
 
 # Create a URL map for load balancing
 resource "google_compute_url_map" "lb_url_map" {
-  name        = "lb-url-map"
-  default_service = google_compute_backend_service.lb_backend_service.self_link
+  name             = "lb-url-map"
+  default_service  = google_compute_backend_service.lb_backend_service.self_link
 }
 
 # Create a target HTTP proxy for load balancing
