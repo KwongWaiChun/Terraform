@@ -46,35 +46,43 @@ resource "kubernetes_service" "nginx" {
   }
 }
 
-resource "kubernetes_replication_controller" "nginx" {
+resource "kubernetes_deployment" "nginx" {
   metadata {
     name      = "nginx"
     namespace = kubernetes_namespace.staging.metadata[0].name
-
-    labels = {
-      run = "nginx"
-    }
   }
 
   spec {
-    selector = {
-      run = "nginx"
+    replicas = 3
+
+    selector {
+      match_labels = {
+        app = "nginx"
+      }
     }
 
     template {
-      container {
-        image = "kwongwaichun/fyp:latest"
-        name  = "nginx"
+      metadata {
+        labels = {
+          app = "nginx"
+        }
+      }
 
-        resources {
-          limits {
-            cpu    = "0.5"
-            memory = "512Mi"
-          }
+      spec {
+        container {
+          image = "kwongwaichun/fyp:latest"
+          name  = "nginx"
 
-          requests {
-            cpu    = "250m"
-            memory = "50Mi"
+          resources {
+            limits {
+              cpu    = "0.5"
+              memory = "512Mi"
+            }
+
+            requests {
+              cpu    = "250m"
+              memory = "50Mi"
+            }
           }
         }
       }
@@ -82,32 +90,42 @@ resource "kubernetes_replication_controller" "nginx" {
   }
 }
 
-resource "kubernetes_horizontal_pod_autoscaler" "nginx" {
+resource "kubernetes_horizontal_pod_autoscaler" "example" {
   metadata {
-    name      = "nginx-autoscaler"
+    name = "test"
     namespace = kubernetes_namespace.staging.metadata[0].name
   }
 
   spec {
+    min_replicas = 1
+    max_replicas = 5
+
     scale_target_ref {
-      name       = kubernetes_replication_controller.nginx.metadata[0].name
-      api_version = "apps/v1"
-      kind       = "ReplicationController"
+      kind = "Deployment"
+      name = "nginx"
     }
 
-    min_replicas = 1
-    max_replicas = 10
-
-    metrics {
-      type = "Resource"
-
-      resource {
-        name = "cpu"
-        target_average_utilization = 50
+    metric {
+      type = "External"
+      external {
+        metric {
+          name = "latency"
+          selector {
+            match_labels = {
+              lb_name = "test"
+            }
+          }
+        }
+        target {
+          type  = "Value"
+          value = "100"
+        }
       }
     }
   }
 }
+
+
 output "load-balancer-ip" {
   value = google_compute_address.default.address
 }
