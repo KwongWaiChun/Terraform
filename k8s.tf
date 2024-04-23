@@ -86,22 +86,11 @@ resource "google_container_node_pool" "default" {
   name       = "default-node-pool"
   location   = var.region
   cluster    = google_container_cluster.default.name
-  node_count = 3
+  node_count = 1
 
   autoscaling {
-    min_node_count = 3
-    max_node_count = 5
-  }
-
-  node_config {
-    machine_type = "n1-standard-1"
-
-    oauth_scopes = [
-      "https://www.googleapis.com/auth/compute",
-      "https://www.googleapis.com/auth/devstorage.read_only",
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring",
-    ]
+    min_node_count = 1
+    max_node_count = 10
   }
 }
 
