@@ -10,10 +10,6 @@ variable "network_name" {
   default = "tf-gke-k8s"
 }
 
-variable "image" {
-  default = "kwongwaichun/fyp" // Your web image
-}
-
 provider "google" {
   region = var.region
 }
@@ -46,25 +42,22 @@ resource "google_container_cluster" "default" {
   network            = google_compute_subnetwork.default.name
   subnetwork         = google_compute_subnetwork.default.name
 
-  // Use legacy ABAC until these issues are resolved:
-  // https://github.com/mcuadros/terraform-provider-helm/issues/56
-  // https://github.com/terraform-providers/terraform-provider-kubernetes/pull/73
-  enable_legacy_abac = true
-
-  // Add load balancer and auto scaling configurations
-  node_config {
-    preemptible  = true
-    machine_type = "n1-standard-1"
-    disk_size_gb = 30
-    image_type   = "COS"
-    image        = var.image
+  // Autoscaling configuration
+  autoscaling {
+    enable_autoscaling = true
+    min_node_count     = 1
+    max_node_count     = 5
   }
 
-  // Add auto scaling configuration
-  enable_autoscaling = true
-  autoscaling {
-    min_node_count = 1
-    max_node_count = 5
+  // Use legacy ABAC until these issues are resolved:
+  //   https://github.com/mcuadros/terraform-provider-helm/issues/56
+  //   https://github.com/terraform-providers/terraform-provider-kubernetes/pull/73
+  enable_legacy_abac = true
+// Wait for the GCE LB controller to cleanup the resources.
+  // Wait for the GCE LB controller to cleanup the resources.
+  provisioner "local-exec" {
+    when    = destroy
+    command = "sleep 90"
   }
 }
 
