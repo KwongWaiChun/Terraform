@@ -22,6 +22,20 @@ resource "google_compute_address" "default" {
   region = var.region
 }
 
+resource "kubernetes_secret" "tls" {
+  metadata {
+    name      = "tls-secret"
+    namespace = kubernetes_namespace.staging.metadata[0].name
+  }
+
+  data = {
+    "tls.key" = filebase64("tls.key")
+    "tls.crt" = filebase64("tls.crt")
+  }
+
+  type = "kubernetes.io/tls"
+}
+
 resource "kubernetes_service" "nginx" {
   metadata {
     namespace = kubernetes_namespace.staging.metadata[0].name
@@ -37,12 +51,17 @@ resource "kubernetes_service" "nginx" {
 
     port {
       protocol    = "TCP"
-      port        = 8080
+      port        = 443
       target_port = 80
     }
 
     type             = "LoadBalancer"
     load_balancer_ip = google_compute_address.default.address
+
+    tls {
+      secret_name = kubernetes_secret.tls.metadata[0].name
+      hosts       = ["k8s.tf"]
+    }
   }
 }
 
