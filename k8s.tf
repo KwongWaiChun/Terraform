@@ -62,27 +62,19 @@ resource "kubernetes_replication_controller" "nginx" {
     }
 
     template {
-      metadata {
-        labels = {
-          run = "nginx"
-        }
-      }
+      container {
+        image = "kwongwaichun/fyp:latest"
+        name  = "nginx"
 
-      spec {
-        container {
-          image = "kwongwaichun/fyp:latest"
-          name  = "nginx"
+        resources {
+          limits {
+            cpu    = "0.5"
+            memory = "512Mi"
+          }
 
-          resources {
-            limits {
-              cpu    = "0.5"
-              memory = "512Mi"
-            }
-
-            requests {
-              cpu    = "250m"
-              memory = "50Mi"
-            }
+          requests {
+            cpu    = "250m"
+            memory = "50Mi"
           }
         }
       }
