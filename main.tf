@@ -34,23 +34,10 @@ data "google_container_engine_versions" "default" {
   location = var.location
 }
 
-resource "google_container_node_pool" "default" {
-  name               = "k8s-node-pool"
-  location           = google_container_cluster.default.location
-  initial_node_count = 3
-  autoscaling {
-    min_node_count = 3
-    max_node_count = 5
-  }
-  node_config {
-    machine_type = "n1-standard-1"
-  }
-  cluster = google_container_cluster.default.name
-}
-
 resource "google_container_cluster" "default" {
   name               = var.network_name
   location           = var.location
+  initial_node_count = 3
   min_master_version = data.google_container_engine_versions.default.latest_master_version
   network            = google_compute_subnetwork.default.name
   subnetwork         = google_compute_subnetwork.default.name
@@ -60,9 +47,12 @@ resource "google_container_cluster" "default" {
   //   https://github.com/terraform-providers/terraform-provider-kubernetes/pull/73
   enable_legacy_abac = true
 
-  // Use the new node pool instead of the default node pool
-  node_pool {
-    name = google_container_node_pool.default.name
+  // Auto Scaling Configuration
+  autoscaling {
+    enable_autoscaling   = true
+    min_node_count       = 3  // Minimum number of nodes
+    max_node_count       = 10 // Maximum number of nodes
+    cpu_utilization_target = 70 // Target CPU utilization percentage
   }
 
   // Wait for the GCE LB controller to cleanup the resources.
