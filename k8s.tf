@@ -1,5 +1,12 @@
+terraform {
+  required_providers {
+    kubernetes = {
+      version = "~> 1.10.0"
+    }
+  }
+}
+
 provider "kubernetes" {
-  version = "~> 1.10.0"
   host    = google_container_cluster.default.endpoint
   token   = data.google_client_config.current.access_token
   client_certificate = base64decode(
@@ -62,19 +69,27 @@ resource "kubernetes_replication_controller" "nginx" {
     }
 
     template {
-      container {
-        image = "kwongwaichun/fyp:latest"
-        name  = "nginx"
+      metadata {
+        labels = {
+          run = "nginx"
+        }
+      }
 
-        resources {
-          limits {
-            cpu    = "0.5"
-            memory = "512Mi"
-          }
+      spec {
+        container {
+          image = "kwongwaichun/fyp:latest"
+          name  = "nginx"
 
-          requests {
-            cpu    = "250m"
-            memory = "50Mi"
+          resources {
+            limits {
+              cpu    = "0.5"
+              memory = "512Mi"
+            }
+
+            requests {
+              cpu    = "250m"
+              memory = "50Mi"
+            }
           }
         }
       }
