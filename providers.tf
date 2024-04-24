@@ -1,30 +1,23 @@
-# https://www.terraform.io/language/settings/backends/gcs
 terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "5.3.0"
+    }
+    
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "2.23.0"
+    }
+  }
+  
   backend "gcs" {}
 }
 
-terraform {
- required_providers {
-   google = {
-     source = "hashicorp/google"
-     version = "5.3.0"
-   }
- }
-}
-
 provider "google" {
- # Configuration options
-}
-
-terraform {
- required_providers {
-   kubernetes = {
-     source = "hashicorp/kubernetes"
-     version = "2.23.0"
-   }
- }
+  # Configuration options
 }
 
 provider "kubernetes" {
- # Configuration options
+  # Configuration options
 }
