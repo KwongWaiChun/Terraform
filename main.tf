@@ -46,8 +46,7 @@ resource "google_container_cluster" "default" {
   //   https://github.com/mcuadros/terraform-provider-helm/issues/56
   //   https://github.com/terraform-providers/terraform-provider-kubernetes/pull/73
   enable_legacy_abac = true
-
-  // Wait for the GCE LB controller to cleanup the resources.
+// Wait for the GCE LB controller to cleanup the resources.
   // Wait for the GCE LB controller to cleanup the resources.
   provisioner "local-exec" {
     when    = destroy
