@@ -52,12 +52,23 @@ resource "google_container_cluster" "default" {
     command = "sleep 90"
   }
 
-  autoscaling {
-    enable_node_autoscaling = true
-    min_node_count          = 3
-    max_node_count          = 5
+  provider = google-beta
+  
+  cluster_autoscaling {
+    enabled = true
+    autoscaling_profile = "OPTIMIZE_UTILIZATION"
+    resource_limits {
+      resource_type = "cpu"
+      minimum = 1
+      maximum = 4
+    }
+    resource_limits {
+      resource_type = "memory"
+      minimum = 4
+      maximum = 16
+    }
   }
-
+  
   vertical_pod_autoscaling {
     enabled = true
   }
