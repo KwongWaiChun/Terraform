@@ -37,7 +37,7 @@ data "google_container_engine_versions" "default" {
 resource "google_container_cluster" "default" {
   name               = var.network_name
   location           = var.location
-  initial_node_count = 1
+  initial_node_count = 3
   min_master_version = data.google_container_engine_versions.default.latest_master_version
   network            = google_compute_subnetwork.default.name
   subnetwork         = google_compute_subnetwork.default.name
@@ -68,7 +68,7 @@ resource "google_container_cluster" "default" {
       maximum = 16
     }
   }
-  
+
   vertical_pod_autoscaling {
     enabled = true
   }
