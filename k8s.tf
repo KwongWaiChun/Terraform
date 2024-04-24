@@ -87,6 +87,15 @@ resource "kubernetes_deployment" "nginx" {
         }
       }
     }
+
+    // Pod Autoscaling Configuration
+    autoscaler {
+      enabled = true
+      min_replicas = 3
+      max_replicas = 10
+
+      target_cpu_utilization_percentage = 75
+    }
   }
 }
 
