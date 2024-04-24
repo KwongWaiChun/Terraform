@@ -1,11 +1,3 @@
-variable "min_nodes" {
-  default = 3
-}
-
-variable "max_nodes" {
-  default = 5
-}
-
 variable "region" {
   default = "asia-east1" // Set as per your nearest location or preference 
 }
@@ -45,10 +37,10 @@ data "google_container_engine_versions" "default" {
 resource "google_container_node_pool" "default" {
   name               = "k8s-node-pool"
   location           = google_container_cluster.default.location
-  initial_node_count = var.min_nodes
+  initial_node_count = 3
   autoscaling {
-    min_node_count = var.min_nodes
-    max_node_count = var.max_nodes
+    min_node_count = 3
+    max_node_count = 5
   }
   node_config {
     machine_type = "n1-standard-1"
@@ -59,7 +51,6 @@ resource "google_container_node_pool" "default" {
 resource "google_container_cluster" "default" {
   name               = var.network_name
   location           = var.location
-  initial_node_count = 3
   min_master_version = data.google_container_engine_versions.default.latest_master_version
   network            = google_compute_subnetwork.default.name
   subnetwork         = google_compute_subnetwork.default.name
