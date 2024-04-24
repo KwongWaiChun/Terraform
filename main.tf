@@ -55,16 +55,6 @@ resource "google_container_cluster" "default" {
   }
 }
 
-resource "google_container_node_pool" "default" {
-  name       = "node-pool"
-  cluster    = google_container_cluster.default.name
-  node_count = 3
-  autoscaling {
-    min_node_count         = 3
-    max_node_count         = 5
-  }
-}
-
 output "network" {
   value = google_compute_subnetwork.default.network
 }
