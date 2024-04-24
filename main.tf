@@ -56,12 +56,12 @@ resource "google_container_cluster" "default" {
 }
 
 resource "google_container_node_pool" "default" {
-  name       = "pool-1"
+  name       = "node-pool"
   cluster    = google_container_cluster.default.name
+  node_count = 3
   autoscaling {
     min_node_count         = 3
     max_node_count         = 10
-    cpu_utilization_target = 70
   }
 }
 
