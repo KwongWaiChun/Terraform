@@ -1,3 +1,11 @@
+variable "min_nodes" {
+  default = 3
+}
+
+variable "max_nodes" {
+  default = 5
+}
+
 variable "region" {
   default = "asia-east1" // Set as per your nearest location or preference 
 }
@@ -34,6 +42,20 @@ data "google_container_engine_versions" "default" {
   location = var.location
 }
 
+resource "google_container_node_pool" "default" {
+  name               = "k8s-node-pool"
+  location           = google_container_cluster.default.location
+  initial_node_count = var.min_nodes
+  autoscaling {
+    min_node_count = var.min_nodes
+    max_node_count = var.max_nodes
+  }
+  node_config {
+    machine_type = "n1-standard-1"
+  }
+  cluster = google_container_cluster.default.name
+}
+
 resource "google_container_cluster" "default" {
   name               = var.network_name
   location           = var.location
@@ -46,7 +68,13 @@ resource "google_container_cluster" "default" {
   //   https://github.com/mcuadros/terraform-provider-helm/issues/56
   //   https://github.com/terraform-providers/terraform-provider-kubernetes/pull/73
   enable_legacy_abac = true
-// Wait for the GCE LB controller to cleanup the resources.
+
+  // Use the new node pool instead of the default node pool
+  node_pool {
+    name = google_container_node_pool.default.name
+  }
+
+  // Wait for the GCE LB controller to cleanup the resources.
   // Wait for the GCE LB controller to cleanup the resources.
   provisioner "local-exec" {
     when    = destroy
