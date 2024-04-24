@@ -35,21 +35,18 @@ jobs:
         name: Authenticate to GCP
         uses: google-github-actions/auth@v1.0.0
         with:
-          token_format: access_token
           create_credentials_file: true
-          activate_credentials_file: true
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_ID }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          access_token_lifetime: '100s'
 
       - id: 'gcloud'
         name: 'gcloud'
         run: |-
           gcloud auth login --brief --cred-file="${{ steps.auth.outputs.credentials_file_path }}"
-          gcloud services list
+          gcloud services list --project ${{ secrets.GCP_PROJECT_ID }}
       
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.2.5
 
@@ -71,7 +68,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
-        if: "${{ github.event.inputs.terraform_operation == 'plan' }}"
+        if: "${{ github.event.inputs.terraform_operation == 'GCP plan' }}"
         continue-on-error: true
 
       - uses: actions/github-script@v6
@@ -117,8 +114,8 @@ jobs:
 
       - name: Terraform apply
         run: terraform apply --auto-approve
-        if: "${{ github.event.inputs.terraform_operation == 'apply' }}"
+        if: "${{ github.event.inputs.terraform_operation == 'GCP apply' }}"
       
       - name: Terraform destroy
         run: terraform destroy --auto-approve
-        if: "${{ github.event.inputs.terraform_operation == 'destroy' }}"
+        if: "${{ github.event.inputs.terraform_operation == 'GCP destroy' }}"
