@@ -13,6 +13,10 @@ provider "kubernetes" {
 
 resource "kubernetes_namespace" "staging" {
   metadata {
+    annotations = {
+      name = "example-annotation"
+    }
+    
     name = "staging"
   }
 }
