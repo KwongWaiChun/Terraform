@@ -87,15 +87,26 @@ resource "kubernetes_deployment" "nginx" {
         }
       }
     }
+  }
+}
 
-    // Pod Autoscaling Configuration
-    autoscaler {
-      enabled = true
-      min_replicas = 3
-      max_replicas = 10
+resource "kubernetes_horizontal_pod_autoscaler" "nginx" {
+  metadata {
+    name      = "nginx-hpa"
+    namespace = kubernetes_namespace.staging.metadata[0].name
+  }
 
-      target_cpu_utilization_percentage = 75
+  spec {
+    scale_target_ref {
+      kind       = "Deployment"
+      name       = kubernetes_deployment.nginx.metadata[0].name
+      api_version = "apps/v1"
     }
+
+    min_replicas = 3
+    max_replicas = 5
+
+    target_cpu_utilization_percentage = 75
   }
 }
 
