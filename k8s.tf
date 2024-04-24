@@ -46,8 +46,7 @@ resource "kubernetes_service" "nginx" {
   }
 }
 
-hcl
-複製
+
 resource "kubernetes_deployment" "nginx" {
   metadata {
     name      = "nginx"
