@@ -37,7 +37,7 @@ resource "kubernetes_service" "nginx" {
 
     port {
       protocol    = "TCP"
-      port        = 80
+      port        = 8080
       target_port = 80
     }
 
