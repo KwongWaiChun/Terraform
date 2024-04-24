@@ -47,19 +47,21 @@ resource "google_container_cluster" "default" {
   //   https://github.com/terraform-providers/terraform-provider-kubernetes/pull/73
   enable_legacy_abac = true
 
-  // Auto Scaling Configuration
-  autoscaling {
-    enable_autoscaling   = true
-    min_node_count       = 3  // Minimum number of nodes
-    max_node_count       = 10 // Maximum number of nodes
-    cpu_utilization_target = 70 // Target CPU utilization percentage
-  }
-
   // Wait for the GCE LB controller to cleanup the resources.
   // Wait for the GCE LB controller to cleanup the resources.
   provisioner "local-exec" {
     when    = destroy
     command = "sleep 90"
+  }
+}
+
+resource "google_container_node_pool" "default" {
+  name       = "pool-1"
+  cluster    = google_container_cluster.default.name
+  autoscaling {
+    min_node_count         = 3
+    max_node_count         = 10
+    cpu_utilization_target = 70
   }
 }
 
