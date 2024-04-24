@@ -82,26 +82,6 @@ resource "kubernetes_replication_controller" "nginx" {
   }
 }
 
-resource "kubernetes_horizontal_pod_autoscaler" "example" {
-  metadata {
-    name      = "example-hpa"
-    namespace = kubernetes_namespace.staging.metadata[0].name
-  }
-
-  spec {
-    scale_target_ref {
-      api_version = "apps/v1"
-      kind        = "ReplicationController"
-      name        = kubernetes_replication_controller.nginx.metadata.0.name
-    }
-
-    min_replicas = 3
-    max_replicas = 5
-
-    target_cpu_utilization_percentage = 80
-  }
-}
-
 output "load-balancer-ip" {
   value = google_compute_address.default.address
 }
