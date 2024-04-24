@@ -22,6 +22,26 @@ resource "google_compute_address" "default" {
   region = var.region
 }
 
+resource "tls_private_key" "nginx" {
+  algorithm = "RSA"
+}
+
+resource "tls_locally_signed_cert" "nginx" {
+  locals {
+    common_name = "k8s.tf"
+  }
+
+  cert_request {
+    private_key_pem = tls_private_key.nginx.private_key_pem
+
+    dns_names = [
+      "k8s.tf",
+    ]
+  }
+
+  validity_period_hours = 12
+}
+
 resource "kubernetes_secret" "tls" {
   metadata {
     name      = "tls-secret"
@@ -29,8 +49,8 @@ resource "kubernetes_secret" "tls" {
   }
 
   data = {
-    "tls.crt" = file("${path.module}/certs/server.crt")
-    "tls.key" = file("${path.module}/certs/server.key")
+    "tls.crt" = tls_locally_signed_cert.nginx.cert_pem
+    "tls.key" = tls_private_key.nginx.private_key_pem
   }
 
   type = "kubernetes.io/tls"
@@ -55,16 +75,47 @@ resource "kubernetes_service" "nginx" {
       target_port = 80
     }
 
-    type             = "LoadBalancer"
+    type = "LoadBalancer"
     load_balancer_ip = google_compute_address.default.address
-
-    tls {
-      secret_name = kubernetes_secret.tls.metadata[0].name
-      hosts       = ["k8s.tf"]
-    }
   }
 }
 
+resource "kubernetes_ingress" "nginx" {
+  metadata {
+    namespace = kubernetes_namespace.staging.metadata[0].name
+    name      = "nginx"
+    annotations = {
+      "kubernetes.io/ingress.class" = "nginx"
+      "nginx.ingress.kubernetes.io/ssl-redirect" = "true"
+      "nginx.ingress.kubernetes.io/ssl-passthrough" = "true"
+    }
+  }
+
+  spec {
+    tls {
+      hosts = [
+        "k8s.tf",
+      ]
+      secret_name = kubernetes_secret.tls.metadata[0].name
+    }
+
+    rule {
+      http {
+        path {
+          path = "/"
+          backend {
+            service {
+              name = kubernetes_service.nginx.metadata[0].name
+              port {
+                number = 443
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 resource "kubernetes_deployment" "nginx" {
   metadata {
