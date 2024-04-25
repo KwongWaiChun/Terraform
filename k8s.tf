@@ -17,11 +17,6 @@ resource "kubernetes_namespace" "staging" {
   }
 }
 
-resource "google_compute_address" "default" {
-  name   = var.network_name
-  region = var.region
-}
-
 resource "kubernetes_service" "nginx" {
   metadata {
     namespace = kubernetes_namespace.staging.metadata[0].name
@@ -90,7 +85,6 @@ resource "kubernetes_deployment" "nginx" {
   }
 }
 
-
 resource "kubernetes_secret" "tls_cred" {
   metadata {
             name = "tls-cred"
@@ -101,24 +95,6 @@ resource "kubernetes_secret" "tls_cred" {
             "tls.key" = file("tls.key")
         }
 type = "kubernetes.io/tls"
-}
-
-resource "kubernetes_ingress" "flask-ingress" {
-  metadata {
-    name = "flask-ingress"
-    annotations = {
-      "kubernetes.io/ingress.global-static-ip-name" = "flask-app-ip"
-    }
-  }
-  spec {
-    tls {
-      secret_name = kubernetes_secret.tls_cred.metadata[0].name
-    }
-    backend {
-      service_name = kubernetes_service.nginx.metadata[0].name
-      service_port = 8080
-    }
-  }
 }
 
 output "load-balancer-ip" {
