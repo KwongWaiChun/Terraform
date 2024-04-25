@@ -1,3 +1,7 @@
+variable "project_id" {
+  default = "	applied-fusion-420309"
+}
+
 variable "region" {
   default = "asia-east1" // Set as per your nearest location or preference 
 }
@@ -76,6 +80,18 @@ resource "google_container_cluster" "default" {
   vertical_pod_autoscaling {
     enabled = true
   }
+}
+
+resource "google_logging_project_sink" "default" {
+  name        = "my-logging-sink"
+  project     = var.project_id
+  destination = "logging.googleapis.com/projects/${var.project_id}"
+
+  filter = "resource.type=k8s\_container AND resource.labels.pod\_name!=kube\-system\*"
+}
+
+resource "google_monitoring_workspace" "default" {
+  name = "my-workspace"
 }
 
 

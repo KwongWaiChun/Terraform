@@ -79,6 +79,51 @@ resource "kubernetes_deployment" "nginx" {
               memory = "50Mi"
             }
           }
+
+          # Add the following configurations to enable logging
+          env {
+            name = "GOOGLE_CLOUD_PROJECT"
+            value_from {
+              field_ref {
+                field_path = "metadata.namespace"
+              }
+            }
+          }
+
+          env {
+            name = "GOOGLE_CLOUD_LOCATION"
+            value = "us-central1"
+          }
+
+          env {
+            name = "GOOGLE_CLOUD_LOGGING_DESTINATION"
+            value = google_logging_project_sink.default.name
+          }
+
+          env {
+            name = "GOOGLE_CLOUD_LOGGING_ONLY_ERRORS"
+            value = "false"
+          }
+
+          env {
+            name = "GOOGLE_CLOUD_LOGGING_ONLY_WARNINGS"
+            value = "false"
+          }
+
+          env {
+            name = "GOOGLE_CLOUD_LOGGING_ONLY_CRITICAL"
+            value = "false"
+          }
+
+          env {
+            name = "GOOGLE_CLOUD_LOGGING_ONLY_INFO"
+            value = "true"
+          }
+
+          env {
+            name = "GOOGLE_CLOUD_LOGGING_ONLY_DEBUG"
+            value = "false"
+          }
         }
       }
     }
