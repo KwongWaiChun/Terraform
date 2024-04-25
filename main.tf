@@ -1,7 +1,3 @@
-variable "project_id" {
-  default = "	applied-fusion-420309"
-}
-
 variable "region" {
   default = "asia-east1" // Set as per your nearest location or preference 
 }
@@ -82,17 +78,48 @@ resource "google_container_cluster" "default" {
   }
 }
 
-resource "google_logging_project_sink" "default" {
-  name        = "my-logging-sink"
-  project     = var.project_id
-  destination = "logging.googleapis.com/projects/${var.project_id}"
 
-  filter = "resource.type=k8s\_container AND resource.labels.pod\_name!=kube\-system\*"
+resource "google_logging_metric" "application_logs" {
+  name        = "application-logs"
+  description = "Metric for streaming application logs"
+
+  filter = "resource.type=\"k8s_container\" AND resource.labels.namespace_name=\"${kubernetes_namespace.staging.metadata[0].name}\" AND resource.labels.container_name=\"nginx\""
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "DISTRIBUTION"
+    unit        = "1"
+  }
+
+  label_extractors = {
+    namespace = "EXTRACT(resource.labels.namespace_name)"
+    container = "EXTRACT(resource.labels.container_name)"
+  }
 }
 
-resource "google_monitoring_workspace" "default" {
-  name = "my-workspace"
+resource "google_logging_metric_exclusion" "application_logs_exclusion" {
+  name        = "application-logs-exclusion"
+  description = "Exclusion for application logs metric"
+
+  filter = "resource.type=\"k8s_container\" AND resource.labels.namespace_name=\"${kubernetes_namespace.staging.metadata[0].name}\" AND resource.labels.container_name=\"nginx\""
+
+  metric {
+    type = google_logging_metric.application_logs.name
+  }
 }
+
+resource "google_logging_sink" "application_logs_sink" {
+  name        = "application-logs-sink"
+  description = "Sink for streaming application logs"
+  destination = "bigquery.googleapis.com/projects/<YOUR_PROJECT_ID>/datasets/<YOUR_DATASET>/tables/<YOUR_TABLE>"
+
+  filter = "resource.type=\"k8s_container\" AND resource.labels.namespace_name=\"${kubernetes_namespace.staging.metadata[0].name}\" AND resource.labels.container_name=\"nginx\""
+
+  include_children = true
+
+  output_version_format = "V2"
+}
+
 
 
 output "network" {
