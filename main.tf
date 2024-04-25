@@ -29,7 +29,7 @@ resource "google_compute_subnetwork" "default" {
 
 resource "google_service_networking_connection" "vpc_peering" {
   provider = google-beta
-  network                 = 172.17.0.1/16
+  network                 = google_compute_network.default.name
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges =       [google_compute_global_address.peering_address.name]
 }
