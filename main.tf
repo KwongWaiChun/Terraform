@@ -27,6 +27,17 @@ resource "google_compute_subnetwork" "default" {
   private_ip_google_access = true
 }
 
+resource "google_service_networking_connection" "vpc_peering" {
+  provider = google-beta
+  network                 = 172.17.0.1/16
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges =       [google_compute_global_address.peering_address.name]
+}
+
+resource "google_compute_global_address" "flask_app_ip" {
+  name = "flask-app-ip"
+}
+
 data "google_client_config" "current" {
 }
 

@@ -103,32 +103,20 @@ resource "kubernetes_secret" "tls_cred" {
 type = "kubernetes.io/tls"
 }
 
-resource "kubernetes_ingress" "nginx" {
+resource "kubernetes_ingress" "flask-ingress" {
   metadata {
-    name      = "nginx"
-    namespace = kubernetes_namespace.staging.metadata[0].name
+    name = "flask-ingress"
     annotations = {
-      "kubernetes.io/ingress.class" = "gce"
-      "nginx.ingress.kubernetes.io/ssl-redirect" = "false"
+      "kubernetes.io/ingress.global-static-ip-name" = "flask-app-ip"
     }
   }
-
   spec {
     tls {
-      hosts       = ["fyp-project.com"]
       secret_name = kubernetes_secret.tls_cred.metadata[0].name
     }
-
-    rule {
-      http {
-        path {
-          path = "/"
-          backend {
-            service_name = kubernetes_service.nginx.metadata[0].name
-            service_port = 8080
-          }
-        }
-      }
+    backend {
+      service_name = kubernetes_service.nginx.metadata[0].name
+      service_port = 8080
     }
   }
 }
