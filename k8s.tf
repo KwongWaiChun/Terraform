@@ -23,8 +23,8 @@ resource "kubernetes_secret" "tls_cred" {
             namespace = kubernetes_namespace.staging.metadata[0].name
           }
   data = {
-            "tls.crt" = file("${path.root}/.tls/revevellidan.com_ssl_certificate.cer")
-            "tls.key" = file("${path.root}/.tls/_.revevellidan.com_private_key.key")
+            "tls.crt" = file("tls.crt")
+            "tls.key" = file("tls.key")
         }
 type = "kubernetes.io/tls"
 }
