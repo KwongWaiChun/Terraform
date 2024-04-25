@@ -17,18 +17,6 @@ resource "kubernetes_namespace" "staging" {
   }
 }
 
-resource "kubernetes_secret" "tls_cred" {
-  metadata {
-            name = "tls-cred"
-            namespace = kubernetes_namespace.staging.metadata[0].name
-          }
-  data = {
-            "tls.crt" = file("tls.crt")
-            "tls.key" = file("tls.key")
-        }
-type = "kubernetes.io/tls"
-}
-
 resource "google_compute_address" "default" {
   name   = var.network_name
   region = var.region
@@ -49,12 +37,8 @@ resource "kubernetes_service" "nginx" {
 
     port {
       protocol    = "TCP"
-      port        = 443
+      port        = 8080
       target_port = 80
-
-    tls {
-        secret_name = kubernetes_secret.tls_cred.metadata[0].name
-      }
     }
 
     type             = "LoadBalancer"
@@ -106,6 +90,48 @@ resource "kubernetes_deployment" "nginx" {
   }
 }
 
+
+resource "kubernetes_secret" "tls_cred" {
+  metadata {
+            name = "tls-cred"
+            namespace = kubernetes_namespace.staging.metadata[0].name
+          }
+  data = {
+            "tls.crt" = file("tls.crt")
+            "tls.key" = file("tls.key")
+        }
+type = "kubernetes.io/tls"
+}
+
+resource "kubernetes_ingress" "nginx" {
+  metadata {
+    name      = "nginx"
+    namespace = kubernetes_namespace.staging.metadata[0].name
+    annotations = {
+      "kubernetes.io/ingress.class" = "gce"
+      "nginx.ingress.kubernetes.io/ssl-redirect" = "false"
+    }
+  }
+
+  spec {
+    tls {
+      hosts       = ["your-domain.com"]
+      secret_name = kubernetes_secret.tls_cred.metadata[0].name
+    }
+
+    rule {
+      http {
+        path {
+          path = "/"
+          backend {
+            service_name = kubernetes_service.nginx.metadata[0].name
+            service_port = 8080
+          }
+        }
+      }
+    }
+  }
+}
 
 output "load-balancer-ip" {
   value = google_compute_address.default.address
