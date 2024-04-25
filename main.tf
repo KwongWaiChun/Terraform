@@ -79,45 +79,6 @@ resource "google_container_cluster" "default" {
 }
 
 
-resource "google_logging_metric" "application_logs" {
-  name        = "application-logs"
-
-  filter = "resource.type=\"k8s_container\" AND resource.labels.namespace_name=\"${kubernetes_namespace.staging.metadata[0].name}\" AND resource.labels.container_name=\"nginx\""
-
-  metric_descriptor {
-    metric_kind = "DELTA"
-    value_type  = "DISTRIBUTION"
-    unit        = "1"
-  }
-
-  label_extractors = {
-    namespace = "EXTRACT(resource.labels.namespace_name)"
-    container = "EXTRACT(resource.labels.container_name)"
-  }
-}
-
-resource "google_logging_metric_exclusion" "application_logs_exclusion" {
-  name        = "application-logs-exclusion"
-
-  filter = "resource.type=\"k8s_container\" AND resource.labels.namespace_name=\"${kubernetes_namespace.staging.metadata[0].name}\" AND resource.labels.container_name=\"nginx\""
-
-  metric {
-    type = google_logging_metric.application_logs.name
-  }
-}
-
-resource "google_logging_sink" "application_logs_sink" {
-  name        = "application-logs-sink"
-
-  filter = "resource.type=\"k8s_container\" AND resource.labels.namespace_name=\"${kubernetes_namespace.staging.metadata[0].name}\" AND resource.labels.container_name=\"nginx\""
-
-  include_children = true
-
-  output_version_format = "V2"
-}
-
-
-
 output "network" {
   value = google_compute_subnetwork.default.network
 }
