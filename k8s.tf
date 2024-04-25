@@ -115,7 +115,7 @@ resource "kubernetes_ingress" "nginx" {
 
   spec {
     tls {
-      hosts       = ["your-domain.com"]
+      hosts       = ["fyp-project.com"]
       secret_name = kubernetes_secret.tls_cred.metadata[0].name
     }
 
