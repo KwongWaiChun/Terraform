@@ -81,7 +81,6 @@ resource "google_container_cluster" "default" {
 
 resource "google_logging_metric" "application_logs" {
   name        = "application-logs"
-  description = "Metric for streaming application logs"
 
   filter = "resource.type=\"k8s_container\" AND resource.labels.namespace_name=\"${kubernetes_namespace.staging.metadata[0].name}\" AND resource.labels.container_name=\"nginx\""
 
@@ -99,7 +98,6 @@ resource "google_logging_metric" "application_logs" {
 
 resource "google_logging_metric_exclusion" "application_logs_exclusion" {
   name        = "application-logs-exclusion"
-  description = "Exclusion for application logs metric"
 
   filter = "resource.type=\"k8s_container\" AND resource.labels.namespace_name=\"${kubernetes_namespace.staging.metadata[0].name}\" AND resource.labels.container_name=\"nginx\""
 
@@ -110,8 +108,6 @@ resource "google_logging_metric_exclusion" "application_logs_exclusion" {
 
 resource "google_logging_sink" "application_logs_sink" {
   name        = "application-logs-sink"
-  description = "Sink for streaming application logs"
-  destination = "bigquery.googleapis.com/projects/<YOUR_PROJECT_ID>/datasets/<YOUR_DATASET>/tables/<YOUR_TABLE>"
 
   filter = "resource.type=\"k8s_container\" AND resource.labels.namespace_name=\"${kubernetes_namespace.staging.metadata[0].name}\" AND resource.labels.container_name=\"nginx\""
 
