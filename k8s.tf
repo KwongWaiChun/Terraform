@@ -17,6 +17,11 @@ resource "kubernetes_namespace" "staging" {
   }
 }
 
+resource "google_compute_address" "default" {
+  name   = var.network_name
+  region = var.region
+}
+
 resource "kubernetes_service" "nginx" {
   metadata {
     namespace = kubernetes_namespace.staging.metadata[0].name
@@ -32,7 +37,7 @@ resource "kubernetes_service" "nginx" {
 
     port {
       protocol    = "TCP"
-      port        = 8080
+      port        = 80
       target_port = 80
     }
 
