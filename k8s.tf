@@ -1,5 +1,5 @@
 provider "kubernetes" {
-  version = "~> 1.10.0"
+  version = "~> 2.10.0"
   host    = google_container_cluster.default.endpoint
   token   = data.google_client_config.current.access_token
   client_certificate = base64decode(
