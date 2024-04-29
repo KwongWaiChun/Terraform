@@ -11,7 +11,7 @@ provider "kubernetes" {
   )
 }
 
-resource "kubernetes_namespace" "staging" {
+resource "kubernetes_namespace_v1" "staging" {
   metadata {
     name = "staging"
   }
@@ -22,9 +22,9 @@ resource "google_compute_address" "default" {
   region = var.region
 }
 
-resource "kubernetes_service" "nginx" {
+resource "kubernetes_service_v1" "nginx" {
   metadata {
-    namespace = kubernetes_namespace.staging.metadata[0].name
+    namespace = kubernetes_namespace_v1.staging.metadata[0].name
     name      = "nginx"
   }
 
@@ -47,10 +47,10 @@ resource "kubernetes_service" "nginx" {
 }
 
 
-resource "kubernetes_deployment" "nginx" {
+resource "kubernetes_deployment_v1" "nginx" {
   metadata {
     name      = "nginx"
-    namespace = kubernetes_namespace.staging.metadata[0].name
+    namespace = kubernetes_namespace_v1.staging.metadata[0].name
   }
 
   spec {
@@ -90,10 +90,10 @@ resource "kubernetes_deployment" "nginx" {
   }
 }
 
-resource "kubernetes_secret" "tls_cred" {
+resource "kubernetes_secret_v1" "tls_cred" {
   metadata {
             name = "tls-cred"
-            namespace = kubernetes_namespace.staging.metadata[0].name
+            namespace = kubernetes_namespace_v1.staging.metadata[0].name
           }
   data = {
             "tls.crt" = file("tls.crt")
@@ -102,10 +102,10 @@ resource "kubernetes_secret" "tls_cred" {
 type = "kubernetes.io/tls"
 }
 
-resource "kubernetes_ingress" "k8s-ingress" {
+resource "kubernetes_ingress_v1" "k8s-ingress" {
   metadata {
     name      = "k8s-ingress"
-    namespace = kubernetes_namespace.staging.metadata[0].name
+    namespace = kubernetes_namespace_v1.staging.metadata[0].name
   }
   
   spec {
@@ -114,8 +114,12 @@ resource "kubernetes_ingress" "k8s-ingress" {
       http {
         path {
           backend {
-            service_name = kubernetes_service.nginx.metadata[0].name
-            service_port = 8080
+            service {
+              name = kubernetes_service_v1.nginx.metadata[0].name
+              port {
+                number = 8080
+              }
+            }
           }
           path = "/"
         }
@@ -124,12 +128,12 @@ resource "kubernetes_ingress" "k8s-ingress" {
     
     tls {
       hosts      = ["fyp-project.com"]
-      secret_name = kubernetes_secret.tls_cred.metadata[0].name
+      secret_name = kubernetes_secret_v1.tls_cred.metadata[0].name
     }
   }
 }
 
-resource "kubernetes_horizontal_pod_autoscaler" "flask-hpa" {
+resource "kubernetes_horizontal_pod_autoscaler_v1" "flask-hpa" {
   metadata {
     name = "flask-hpa"
   }
