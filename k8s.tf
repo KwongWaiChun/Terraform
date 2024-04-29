@@ -123,7 +123,7 @@ resource "kubernetes_ingress" "k8s-ingress" {
     }
     
     tls {
-      hosts      = "fyp-project.com"
+      hosts      = ["fyp-project.com"]
       secret_name = kubernetes_secret.tls_cred.metadata[0].name
     }
   }
