@@ -37,7 +37,7 @@ resource "kubernetes_service" "nginx" {
 
     port {
       protocol    = "TCP"
-      port        = 80
+      port        = 8080
       target_port = 80
     }
 
@@ -102,29 +102,33 @@ resource "kubernetes_secret" "tls_cred" {
 type = "kubernetes.io/tls"
 }
 
-resource "kubernetes_ingress" "flask_ingress" {
+resource "kubernetes_ingress" "k8s-ingress" {
   metadata {
-    name      = "flask-ingress"
+    name      = "k8s-ingress"
     namespace = kubernetes_namespace.staging.metadata[0].name
   }
-
+  
   spec {
-    tls {
-      secret_name = kubernetes_secret.tls_cred.metadata[0].name
-    }
     rule {
-      host = "fyp-project.com"  # Replace with your app's domain
+      host = "fyp-project.com"
       http {
         path {
-          path = "/"
           backend {
             service_name = kubernetes_service.nginx.metadata[0].name
-            service_port = kubernetes_service.nginx.spec[0].port[0].port
+            service_port = 8080
           }
+          path = "/"
         }
       }
     }
+    
+    tls {
+      hosts      = ["fyp-project.com"]
+      secret_name = kubernetes_secret.tls_cred.metadata[0].name
+    }
   }
+
+  wait_for_load_balancer = true
 }
 
 output "load-balancer-ip" {

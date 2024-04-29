@@ -74,49 +74,6 @@ resource "google_container_cluster" "default" {
   }
 }
 
-# Create a DNS managed zone
-resource "google_dns_managed_zone" "zone" {
-  name        = "fyp-project-zone"
-  dns_name    = "fyp-project.com."
-  description = "Managed zone for fyp-project.com"
-}
-
-# Create SOA record
-resource "google_dns_record_set" "soa_record" {
-  managed_zone = google_dns_managed_zone.zone.name
-  name         = "fyp-project.com."
-  type         = "SOA"
-  ttl          = 21600
-
-  rrdatas = [
-    "ns-cloud-a1.googledomains.com. cloud-dns-hostmaster.google.com. 1 21600 3600 259200 300",
-  ]
-}
-
-# Create NS records
-resource "google_dns_record_set" "ns_records" {
-  managed_zone = google_dns_managed_zone.zone.name
-  name         = "fyp-project.com."
-  type         = "NS"
-  ttl          = 21600
-
-  rrdatas = [
-    "ns-cloud-a1.googledomains.com.",
-    "ns-cloud-a2.googledomains.com.",
-    "ns-cloud-a3.googledomains.com.",
-    "ns-cloud-a4.googledomains.com.",
-  ]
-}
-
-# Create a DNS record set for your domain
-resource "google_dns_record_set" "domain_record" {
-  managed_zone = google_dns_managed_zone.zone.name
-  name    = "fyp-project.com."
-  type    = "A"
-  ttl     = 300
-  rrdatas = [google_compute_address.default.address]
-}
-
 output "network" {
   value = google_compute_subnetwork.default.network
 }
