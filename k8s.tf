@@ -102,7 +102,7 @@ resource "kubernetes_secret" "tls_cred" {
 type = "kubernetes.io/tls"
 }
 
-resource "kubernetes_ingress_v1" "k8s-ingress" {
+resource "kubernetes_ingress" "k8s-ingress" {
   metadata {
     name      = "k8s-ingress"
     namespace = kubernetes_namespace.staging.metadata[0].name
@@ -114,12 +114,8 @@ resource "kubernetes_ingress_v1" "k8s-ingress" {
       http {
         path {
           backend {
-            service {
-              name = kubernetes_service.nginx.metadata[0].name
-              port {
-                number = 8080
-              }
-            }
+            service_name = kubernetes_service.nginx.metadata[0].name
+            service_port = 8080
           }
           path = "/"
         }
@@ -130,6 +126,23 @@ resource "kubernetes_ingress_v1" "k8s-ingress" {
       hosts      = ["fyp-project.com"]
       secret_name = kubernetes_secret.tls_cred.metadata[0].name
     }
+  }
+}
+
+resource "kubernetes_horizontal_pod_autoscaler" "flask-hpa" {
+  metadata {
+    name = "flask-hpa"
+  }
+
+  spec {
+    max_replicas = 4
+    min_replicas = 1
+
+    scale_target_ref {
+      kind = "Deployment"
+      name = "nginx"
+    }
+    target_cpu_utilization_percentage = 75
   }
 }
 
