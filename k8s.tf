@@ -102,6 +102,31 @@ resource "kubernetes_secret" "tls_cred" {
 type = "kubernetes.io/tls"
 }
 
+resource "kubernetes_ingress" "flask_ingress" {
+  metadata {
+    name      = "flask-ingress"
+    namespace = kubernetes_namespace.staging.metadata[0].name
+  }
+
+  spec {
+    tls {
+      secret_name = kubernetes_secret.tls_cred.metadata[0].name
+    }
+    rule {
+      host = "fyp-project.com"  # Replace with your app's domain
+      http {
+        path {
+          path = "/"
+          backend {
+            service_name = kubernetes_service.nginx.metadata[0].name
+            service_port = kubernetes_service.nginx.spec[0].port[0].port
+          }
+        }
+      }
+    }
+  }
+}
+
 output "load-balancer-ip" {
   value = google_compute_address.default.address
 }
