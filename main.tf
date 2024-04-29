@@ -110,10 +110,10 @@ resource "google_dns_record_set" "ns_records" {
 
 # Create a DNS record set for your domain
 resource "google_dns_record_set" "domain_record" {
+  managed_zone = google_dns_managed_zone.zone.name
   name    = "fyp-project.com."
   type    = "A"
   ttl     = 300
-  managed_zone = google_dns_managed_zone.dns_zone.name
   rrdatas = [google_compute_address.default.address]
 }
 
