@@ -165,6 +165,37 @@ resource "aws_security_group" "ec2_security_group" {
   ]
 }
 
+resource "tls_private_key" "ec2_tls_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+ }
+
+resource "aws_key_pair" "ec2_key_pair" {
+  key_name   = "ec2-key"
+  public_key = tls_private_key.ec2_tls_key.public_key_openssh
+}
+
+resource "local_file" "ssh_key" {
+  filename = "${aws_key_pair.ec2_tls_key.key_name}.pem"
+  content = tls_private_key.ec2_key_pair.private_key_pem
+}
+
+resource "aws_s3_bucket" "key_bucket" {
+  bucket = "key_bucket"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_acl" "acl_bucket" {
+  bucket = aws_s3_bucket.key_bucket.id
+  acl    = "private"
+}
+
+resource "aws_s3_object" "ssh_key" {
+  bucket = aws_s3_bucket.key_bucket.id
+  key = "${aws_key_pair.ec2_tls_key.key_name}.pem"
+  source = local_file.ssh_key.filename
+}
+
 resource "aws_eip" "ec2_instance1_eip" {
   domain = "vpc"
 }
@@ -177,19 +208,17 @@ resource "aws_eip_association" "ec2_instance1_eip_association" {
 resource "aws_instance" "ec2_instance1" {
   ami = "ami-06b09bfacae1453cb"
   instance_type = "t2.micro"
+  key_name = aws_key_pair.ec2_key_pair.key_name
 
   associate_public_ip_address = false
   subnet_id = aws_subnet.public_subnet1.id
-  security_groups = aws_security_group.ec2_security_group.id
+  vpc_security_group_ids = aws_security_group.ec2_security_group.id
   
-
-  ebs_block_device {
-    device_name = "/dev/xvda"
+  root_block_device {
     volume_type = "gp3"
     volume_size = 8
     delete_on_termination = true
     encrypted   = false
-    snapshot_id = "snap-0ad2348eab4dde717"
   }
 
   tags = {
@@ -209,19 +238,17 @@ resource "aws_eip_association" "ec2_instance2_eip_association" {
 resource "aws_instance" "ec2_instance2" {
   ami = "ami-06b09bfacae1453cb"
   instance_type = "t2.micro"
+  key_name = aws_key_pair.ec2_key_pair.key_name
 
   associate_public_ip_address = false
   subnet_id = aws_subnet.public_subnet2.id
-  security_groups = aws_security_group.ec2_security_group.id
+  vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   
-
-  ebs_block_device {
-    device_name = "/dev/xvda"
+  root_block_device {
     volume_type = "gp3"
     volume_size = 8
     delete_on_termination = true
     encrypted   = false
-    snapshot_id = "snap-0ad2348eab4dde717"
   }
 
   tags = {
@@ -232,10 +259,10 @@ resource "aws_instance" "ec2_instance2" {
 resource "aws_rds_cluster" "aurora_cluster" {
   engine = "aurora-mysql"
   engine_mode = "serverless"
-  engine_version = "5.7.mysql_aurora.2.07.1"
-  database_name = "MyDatabase"
-  master_username = "admin"
-  manage_master_user_password = "admin123"
+  engine_version = "5.7.mysql_aurora.2.11.4"
+  database_name = var.database_name
+  master_username = var.master_username
+  manage_master_user_password = var.manage_master_user_password
   enable_http_endpoint = true
   scaling_configuration {
     auto_pause = true
@@ -250,4 +277,3 @@ resource "aws_rds_cluster" "aurora_cluster" {
     aws_security_group.aurora_security_group.id
   ]
 }
-
