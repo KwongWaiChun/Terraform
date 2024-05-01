@@ -28,19 +28,19 @@ variable private_subnet2_cidr {
   default = "10.0.8.0/22"
 }
 
-variable "database_name" {
+variable database_name {
   description = "Name of the database"
   type        = string
   default     = "MyDatabase"
 }
 
-variable "master_username" {
+variable master_username {
   description = "Username for the master user"
   type        = string
   default     = "admin"
 }
 
-variable "manage_master_user_password" {
+variable manage_master_user_password {
   description = "Password for the master user"
   type        = string
   default     = "admin123"
