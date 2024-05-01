@@ -175,7 +175,7 @@ resource "aws_key_pair" "ec2_key_pair" {
 
 resource "local_file" "ssh_key" {
   filename = "${aws_key_pair.ec2_key_pair.key_name}.pem"
-  content = tls_private_key.ec2_key_pair.private_key_pem
+  content = tls_private_key.ec2_tls_key.private_key_pem
 }
 
 resource "aws_s3_bucket" "key_bucket" {
