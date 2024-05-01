@@ -149,22 +149,16 @@ resource "aws_security_group" "ec2_security_group" {
   description = "bastion host security group"
   name = "BastionHostSecurityGroup"
   vpc_id = aws_vpc.vpc.id
-  ingress = [
-    {
+  ingress = {
       cidr_blocks = ["0.0.0.0/0"]
       from_port = 22
       protocol = "tcp"
       to_port = 22
     }
-  ]
-  egress = [
-    {
+  egress = {
       cidr_blocks = ["0.0.0.0/0"]
-      from_port   = 0
-      to_port     = 0
       protocol = "-1"
     }
-  ]
 }
 
 resource "tls_private_key" "ec2_tls_key" {
