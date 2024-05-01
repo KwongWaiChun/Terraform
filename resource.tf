@@ -8,7 +8,7 @@ resource "aws_vpc" "vpc" {
 }
 
 resource "aws_subnet" "public_subnet1" {
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
   cidr_block = var.public_subnet1_cidr
   availability_zone = "us-east-1a"
   tags = {
@@ -17,7 +17,7 @@ resource "aws_subnet" "public_subnet1" {
 }
 
 resource "aws_subnet" "public_subnet2" {
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
   cidr_block = var.public_subnet2_cidr
   availability_zone = "us-east-1b"
   tags = {
@@ -26,7 +26,7 @@ resource "aws_subnet" "public_subnet2" {
 }
 
 resource "aws_subnet" "private_subnet1" {
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
   cidr_block = var.private_subnet1_cidr
   availability_zone = "us-east-1a"
   tags = {
@@ -35,7 +35,7 @@ resource "aws_subnet" "private_subnet1" {
 }
 
 resource "aws_subnet" "private_subnet2" {
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
   cidr_block = var.private_subnet2_cidr
   availability_zone = "us-east-1b"
   tags = {
@@ -51,7 +51,7 @@ resource "aws_internet_gateway" "internet_gateway" {
 
 resource "aws_vpc_endpoint" "s3_endpoint" {
   service_name = "com.amazonaws.us-east-1.s3"
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
   route_table_ids = [
     aws_route_table.private_route_table1.id,
     aws_route_table.private_route_table2.id
@@ -59,32 +59,33 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
 }
 
 resource "aws_vpn_gateway_attachment" "internet_gateway_attachment1" {
-  vpc_id = aws_internet_gateway.internet_gateway.id
+  vpc_id = aws_vpc.vpc.id
+  vpn_gateway_id = aws_internet_gateway.internet_gateway.id
 }
 
 resource "aws_route_table" "public_route_table1" {
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
   tags = {
     Name = "PublicRouteTable1"
   }
 }
 
 resource "aws_route_table" "public_route_table2" {
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
   tags = {
     Name = "PublicRouteTable2"
   }
 }
 
 resource "aws_route_table" "private_route_table1" {
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
   tags = {
     Name = "PrivateRouteTable1"
   }
 }
 
 resource "aws_route_table" "private_route_table2" {
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
   tags = {
     Name = "PrivateRouteTable2"
   }
@@ -124,11 +125,11 @@ resource "aws_route" "public_route_table2_default_route" {
 
 resource "aws_security_group" "aurora_security_group" {
   description = "Aurora security group"
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "aurora_security_group_ingress" {
-  referenced_security_group_id = aws_security_group.aurora_security_group.arn
+  security_group_id = aws_security_group.aurora_security_group.id
   ip_protocol = "tcp"
   from_port = 3306
   to_port = 3306
@@ -147,7 +148,7 @@ resource "aws_db_subnet_group" "db_subnet_group" {
 resource "aws_security_group" "ec2_security_group" {
   description = "bastion host security group"
   name = "BastionHostSecurityGroup"
-  vpc_id = aws_vpc.vpc.arn
+  vpc_id = aws_vpc.vpc.id
   ingress = [
     {
       cidr_blocks = "0.0.0.0/0"
@@ -164,84 +165,68 @@ resource "aws_security_group" "ec2_security_group" {
   ]
 }
 
-resource "aws_ec2_fleet" "ec2_instance1_eip" {
-  // CF Property(Domain) = "vpc"
+resource "aws_eip" "ec2_instance1_eip" {
+  domain = "vpc"
 }
 
 resource "aws_eip_association" "ec2_instance1_eip_association" {
-  instance_id = aws_ec2_instance_state.ec2_instance1.id
-  // CF Property(EIP) = aws_ec2_fleet.ec2_instance1_eip.id
+  instance_id = aws_instance.ec2_instance1.id
+  allocation_id = aws_eip.ec2_instance1_eip.id
 }
 
-resource "aws_ec2_instance_state" "ec2_instance1" {
-  // CF Property(ImageId) = "ami-06b09bfacae1453cb"
-  instance_id = "t2.micro"
-  // CF Property(NetworkInterfaces) = [
-  //   {
-  //     AssociatePublicIpAddress = false
-  //     DeviceIndex = 0
-  //     SubnetId = aws_subnet.public_subnet1.id
-  //     DeleteOnTermination = true
-  //     GroupSet = [
-  //       aws_security_group.ec2_security_group.arn
-  //     ]
-  //   }
-  // ]
-  // CF Property(BlockDeviceMappings) = [
-  //   {
-  //     DeviceName = "/dev/xvda"
-  //     Ebs = {
-  //       Encrypted = false
-  //       VolumeSize = 8
-  //       SnapshotId = "snap-0ad2348eab4dde717"
-  //       VolumeType = "gp3"
-  //       DeleteOnTermination = true
-  //     }
-  //   }
-  // ]
-  // CF Property(tags) = {
-  //   Name = "BastionHost1"
-  // }
+resource "aws_instance" "ec2_instance1" {
+  ami = "ami-06b09bfacae1453cb"
+  instance_type = "t2.micro"
+
+  associate_public_ip_address = false
+  subnet_id = aws_subnet.public_subnet1.id
+  security_groups = aws_security_group.ec2_security_group.id
+  
+
+  ebs_block_device {
+    device_name = "/dev/xvda"
+    volume_type = "gp3"
+    volume_size = 8
+    delete_on_termination = true
+    encrypted   = false
+    snapshot_id = "snap-0ad2348eab4dde717"
+  }
+
+  tags = {
+    "Name" = "BastionHost1"
+  }
 }
 
-resource "aws_ec2_fleet" "ec2_instance2_eip" {
-  // CF Property(Domain) = "vpc"
+resource "aws_eip" "ec2_instance2_eip" {
+  domain = "vpc"
 }
 
 resource "aws_eip_association" "ec2_instance2_eip_association" {
-  instance_id = aws_ec2_instance_state.ec2_instance2.id
-  // CF Property(EIP) = aws_ec2_fleet.ec2_instance2_eip.id
+  instance_id = aws_instance.ec2_instance2.id
+  allocation_id = aws_eip.ec2_instance2_eip.id
 }
 
-resource "aws_ec2_instance_state" "ec2_instance2" {
-  // CF Property(ImageId) = "ami-06b09bfacae1453cb"
-  instance_id = "t2.micro"
-  // CF Property(NetworkInterfaces) = [
-  //   {
-  //     AssociatePublicIpAddress = false
-  //     DeviceIndex = 0
-  //     SubnetId = aws_subnet.public_subnet2.id
-  //     DeleteOnTermination = true
-  //     GroupSet = [
-  //       aws_security_group.ec2_security_group.arn
-  //     ]
-  //   }
-  // ]
-  // CF Property(BlockDeviceMappings) = [
-  //   {
-  //     DeviceName = "/dev/xvda"
-  //     Ebs = {
-  //       Encrypted = false
-  //       VolumeSize = 8
-  //       SnapshotId = "snap-0ad2348eab4dde717"
-  //       VolumeType = "gp3"
-  //       DeleteOnTermination = true
-  //     }
-  //   }
-  // ]
-  // CF Property(tags) = {
-  //   Name = "BastionHost2"
-  // }
+resource "aws_instance" "ec2_instance2" {
+  ami = "ami-06b09bfacae1453cb"
+  instance_type = "t2.micro"
+
+  associate_public_ip_address = false
+  subnet_id = aws_subnet.public_subnet2.id
+  security_groups = aws_security_group.ec2_security_group.id
+  
+
+  ebs_block_device {
+    device_name = "/dev/xvda"
+    volume_type = "gp3"
+    volume_size = 8
+    delete_on_termination = true
+    encrypted   = false
+    snapshot_id = "snap-0ad2348eab4dde717"
+  }
+
+  tags = {
+    "Name" = "BastionHost2"
+  }
 }
 
 resource "aws_rds_cluster" "aurora_cluster" {
@@ -252,17 +237,17 @@ resource "aws_rds_cluster" "aurora_cluster" {
   master_username = "admin"
   manage_master_user_password = "admin123"
   enable_http_endpoint = true
-  scaling_configuration = {
-    AutoPause = true
-    MaxCapacity = 16
-    MinCapacity = 2
-    SecondsUntilAutoPause = 300
-    TimeoutAction = "ForceApplyCapacityChange"
+  scaling_configuration {
+    auto_pause = true
+    max_capacity = 16
+    min_capacity = 2
+    seconds_until_auto_pause = 300
+    timeout_action = "ForceApplyCapacityChange"
   }
   storage_encrypted = true
   db_subnet_group_name = aws_db_subnet_group.db_subnet_group.id
   vpc_security_group_ids = [
-    aws_security_group.aurora_security_group.arn
+    aws_security_group.aurora_security_group.id
   ]
 }
 
