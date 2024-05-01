@@ -180,7 +180,6 @@ resource "local_file" "ssh_key" {
 
 resource "aws_s3_bucket" "key_bucket" {
   bucket = "key_bucket"
-  force_destroy = true
 }
 
 resource "aws_s3_bucket_acl" "acl_bucket" {
