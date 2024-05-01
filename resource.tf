@@ -137,7 +137,7 @@ resource "aws_vpc_security_group_ingress_rule" "aurora_security_group_ingress" {
 }
 
 resource "aws_db_subnet_group" "db_subnet_group" {
-  name = "auroradb-SubnetGroup"
+  name = "auroradb_SubnetGroup"
   description = "Subnet group for Aurora DB"
   subnet_ids = [
     aws_subnet.private_subnet1.id,
