@@ -137,7 +137,7 @@ resource "aws_vpc_security_group_ingress_rule" "aurora_security_group_ingress" {
 }
 
 resource "aws_db_subnet_group" "db_subnet_group" {
-  name = "auroradb_SubnetGroup"
+  name = "auroradb-subnetgroup"
   description = "Subnet group for Aurora DB"
   subnet_ids = [
     aws_subnet.private_subnet1.id,
@@ -151,7 +151,7 @@ resource "aws_security_group" "ec2_security_group" {
   vpc_id = aws_vpc.vpc.id
   ingress = [
     {
-      cidr_blocks = "0.0.0.0/0"
+      cidr_blocks = ["0.0.0.0/0"]
       from_port = 22
       protocol = "tcp"
       to_port = 22
@@ -159,10 +159,10 @@ resource "aws_security_group" "ec2_security_group" {
   ]
   egress = [
     {
-      cidr_blocks = "0.0.0.0/0"
+      cidr_blocks = ["0.0.0.0/0"]
       from_port   = 0
       to_port     = 0
-      protocol = -1
+      protocol = "-1"
     }
   ]
 }
@@ -178,7 +178,7 @@ resource "aws_key_pair" "ec2_key_pair" {
 }
 
 resource "local_file" "ssh_key" {
-  filename = "${aws_key_pair.ec2_tls_key.key_name}.pem"
+  filename = "${aws_key_pair.ec2_key_pair.key_name}.pem"
   content = tls_private_key.ec2_key_pair.private_key_pem
 }
 
