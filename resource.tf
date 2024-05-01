@@ -139,10 +139,7 @@ resource "aws_vpc_security_group_ingress_rule" "aurora_security_group_ingress" {
 resource "aws_db_subnet_group" "db_subnet_group" {
   name = "auroradb-subnetgroup"
   description = "Subnet group for Aurora DB"
-  subnet_ids = [
-    aws_subnet.private_subnet1.id,
-    aws_subnet.private_subnet2.id
-  ]
+  subnet_ids = [aws_subnet.private_subnet1.id, aws_subnet.private_subnet2.id]
 }
 
 resource "aws_security_group" "ec2_security_group" {
@@ -270,7 +267,5 @@ resource "aws_rds_cluster" "aurora_cluster" {
   }
   storage_encrypted = true
   db_subnet_group_name = aws_db_subnet_group.db_subnet_group.id
-  vpc_security_group_ids = [
-    aws_security_group.aurora_security_group.id
-  ]
+  vpc_security_group_ids = [aws_security_group.aurora_security_group.id]
 }
