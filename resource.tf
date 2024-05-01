@@ -190,7 +190,7 @@ resource "aws_s3_bucket_acl" "acl_bucket" {
 
 resource "aws_s3_object" "ssh_key" {
   bucket = aws_s3_bucket.key_bucket.id
-  key = "${aws_key_pair.ec2_tls_key.key_name}.pem"
+  key = "${aws_key_pair.ec2_key_pair.key_name}.pem"
   source = local_file.ssh_key.filename
 }
 
