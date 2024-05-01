@@ -206,7 +206,7 @@ resource "aws_instance" "ec2_instance1" {
 
   associate_public_ip_address = false
   subnet_id = aws_subnet.public_subnet1.id
-  vpc_security_group_ids = aws_security_group.ec2_security_group.id
+  vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
   
   root_block_device {
     volume_type = "gp3"
@@ -256,7 +256,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   engine_version = "5.7.mysql_aurora.2.11.4"
   database_name = var.database_name
   master_username = var.master_username
-  manage_master_user_password = var.manage_master_user_password
+  manage_master_user_password = var.manage_master_user_password == "" ? true : false
   enable_http_endpoint = true
   scaling_configuration {
     auto_pause = true
