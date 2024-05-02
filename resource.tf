@@ -254,6 +254,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   master_username = var.master_username
   master_password = var.master_password
   enable_http_endpoint = true
+  skip_final_snapshot = true
   scaling_configuration {
     auto_pause = true
     max_capacity = 16
