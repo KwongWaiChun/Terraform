@@ -40,7 +40,7 @@ variable master_username {
   default     = "admin"
 }
 
-variable manage_master_user_password {
+variable master_password {
   description = "Password for the master user"
   type        = string
   default     = "admin123"

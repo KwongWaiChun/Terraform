@@ -252,7 +252,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   engine_version = "5.7.mysql_aurora.2.11.4"
   database_name = var.database_name
   master_username = var.master_username
-  manage_master_user_password = var.manage_master_user_password == "" ? true : false
+  master_password = var.master_password
   enable_http_endpoint = true
   scaling_configuration {
     auto_pause = true
