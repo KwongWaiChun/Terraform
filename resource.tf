@@ -44,6 +44,7 @@ resource "aws_subnet" "private_subnet2" {
 }
 
 resource "aws_internet_gateway" "internet_gateway" {
+  vpc_id = aws_vpc.vpc.id
   tags = {
     Name = "InternetGateway"
   }
@@ -56,11 +57,6 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
     aws_route_table.private_route_table1.id,
     aws_route_table.private_route_table2.id
   ]
-}
-
-resource "aws_vpn_gateway_attachment" "internet_gateway_attachment1" {
-  vpc_id = aws_vpc.vpc.id
-  vpn_gateway_id = aws_internet_gateway.internet_gateway.id
 }
 
 resource "aws_route_table" "public_route_table1" {
