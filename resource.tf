@@ -175,11 +175,6 @@ resource "aws_s3_bucket" "key_bucket" {
   bucket_prefix = "key-bucket"
 }
 
-resource "aws_s3_bucket_acl" "acl_bucket" {
-  bucket = aws_s3_bucket.key_bucket.id
-  acl    = "private"
-}
-
 resource "aws_s3_object" "ssh_key" {
   bucket = aws_s3_bucket.key_bucket.id
   key = "${aws_key_pair.ec2_key_pair.key_name}.pem"
