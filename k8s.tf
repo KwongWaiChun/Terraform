@@ -1,3 +1,4 @@
+
 resource "kubernetes_namespace" "staging" {
   metadata {
     name = "staging"
@@ -60,13 +61,13 @@ resource "kubernetes_deployment" "nginx" {
         container {
           name  = "nginx"
           image = "kwongwaichun/fyp:latest"
-
           resources {
-            limits {
+
+            limits = {
               cpu    = "500m"
               memory = "512Mi"
             }
-            requests {
+            requests = {
               cpu    = "250m"
               memory = "50Mi"
             }
