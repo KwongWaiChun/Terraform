@@ -74,12 +74,11 @@ resource "kubernetes_deployment" "nginx" {
           name  = "nginx"
           image = "kwongwaichun/fyp:latest"
           resources {
-
-            limits = {
+            limits {
               cpu    = "500m"
               memory = "512Mi"
             }
-            requests = {
+            requests {
               cpu    = "250m"
               memory = "50Mi"
             }
