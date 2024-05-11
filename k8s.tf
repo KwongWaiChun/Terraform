@@ -37,8 +37,8 @@ resource "kubernetes_service" "nginx" {
 
     port {
       protocol    = "TCP"
-      port        = 80
-      target_port = 80
+      port        = 443
+      target_port = 443
     }
 
     type             = "LoadBalancer"
@@ -94,13 +94,10 @@ resource "kubernetes_secret" "tls_cred" {
     name = "tls-cred"
     namespace = kubernetes_namespace.staging.metadata[0].name
   }
-
   data = {
     "tls.crt" = file("tls.crt")
     "tls.key" = file("tls.key")
   }
-
-type = "kubernetes.io/tls"
 }
 
 resource "kubernetes_secret" "ssh_tunnel" {
