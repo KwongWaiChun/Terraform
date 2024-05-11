@@ -37,7 +37,7 @@ resource "kubernetes_service" "nginx" {
 
     port {
       protocol    = "TCP"
-      port        = 80
+      port        = 8080
       target_port = 80
     }
 
@@ -92,32 +92,57 @@ resource "kubernetes_deployment" "nginx" {
 
 resource "kubernetes_secret" "tls_cred" {
   metadata {
-    name = "tls-cred"
-    namespace = kubernetes_namespace.staging.metadata[0].name
-  }
-
+            name = "tls-cred"
+            namespace = kubernetes_namespace.staging.metadata[0].name
+          }
   data = {
-    "tls.crt" = file("tls.crt")
-    "tls.key" = file("tls.key")
-  }
-
+            "tls.crt" = file("tls.crt")
+            "tls.key" = file("tls.key")
+        }
 type = "kubernetes.io/tls"
 }
 
-resource "kubernetes_secret" "ssh_tunnel" {
+resource "kubernetes_ingress" "k8s-ingress" {
   metadata {
-    name = "ssh-tunnel"
+    name      = "k8s-ingress"
     namespace = kubernetes_namespace.staging.metadata[0].name
   }
+  
+  spec {
+    rule {
+      host = "fyp-project.com"
+      http {
+        path {
+          backend {
+            service_name = kubernetes_service.nginx.metadata[0].name
+            service_port = 8080
+          }
+          path = "/"
+        }
+      }
+    }
+    
+    tls {
+      hosts      = ["fyp-project.com"]
+      secret_name = kubernetes_secret.tls_cred.metadata[0].name
+    }
+  }
+}
 
-  data = {
-    "ssh_host" = "ec2-23-20-58-240.compute-1.amazonaws.com"
-    "ssh_username" = "ec2-user"
-    "ssh_private_key" = file("labsuser.pem")
-    "rds_host" = "fyp-auroracluster-3sojpv1iwlyb.cluster-c7aws6ioupad.us-east-1.rds.amazonaws.com"
-    "rds_username" = "admin"
-    "rds_password" = "admin123"
-    "rds_database" = "MyDatabase"
+resource "kubernetes_horizontal_pod_autoscaler" "flask-hpa" {
+  metadata {
+    name = "flask-hpa"
+  }
+
+  spec {
+    max_replicas = 4
+    min_replicas = 1
+
+    scale_target_ref {
+      kind = "Deployment"
+      name = "nginx"
+    }
+    target_cpu_utilization_percentage = 75
   }
 }
 

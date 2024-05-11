@@ -19,10 +19,6 @@ resource "google_compute_network" "default" {
   auto_create_subnetworks = false
 }
 
-resource "google_compute_address" "flask_app_ip" {
-  name = "flask-app-ip"
-}
-
 resource "google_compute_subnetwork" "default" {
   name                     = var.network_name
   ip_cidr_range            = "10.140.0.0/20"  // Change as per your region/zone
@@ -77,7 +73,6 @@ resource "google_container_cluster" "default" {
     enabled = true
   }
 }
-
 
 output "network" {
   value = google_compute_subnetwork.default.network
