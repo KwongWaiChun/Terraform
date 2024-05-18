@@ -242,28 +242,22 @@ resource "aws_instance" "ec2_instance2" {
 }
 
 resource "aws_rds_cluster" "aurora_cluster" {
-  cluster_identifier = "aurora_cluster_instance"
   engine = "aurora-mysql"
-  engine_mode = "provisioned"
-  engine_version = "8.0.mysql_aurora.3.06.0"
+  engine_mode = "serverless"
+  engine_version = "5.7.mysql_aurora.2.11.4"
   database_name = var.database_name
   master_username = var.master_username
   master_password = var.master_password
-  backup_retention_period = 90
   enable_http_endpoint = true
   skip_final_snapshot = true
-  serverlessv2_scaling_configuration {
-    max_capacity = 8
-    min_capacity = 0.5
+  scaling_configuration {
+    auto_pause = true
+    max_capacity = 16
+    min_capacity = 2
+    seconds_until_auto_pause = 300
+    timeout_action = "ForceApplyCapacityChange"
   }
   storage_encrypted = true
   db_subnet_group_name = aws_db_subnet_group.db_subnet_group.id
   vpc_security_group_ids = [aws_security_group.aurora_security_group.id]
-}
-
-resource "aws_rds_cluster_instance" "aurora_cluster_instance" {
-  cluster_identifier = aws_rds_cluster.aurora_cluster.id
-  instance_class     = "db.serverless"
-  engine             = aws_rds_cluster.aurora_cluster.engine
-  engine_version     = aws_rds_cluster.aurora_cluster.engine_version
 }
