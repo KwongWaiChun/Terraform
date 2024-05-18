@@ -242,14 +242,14 @@ resource "aws_instance" "ec2_instance2" {
 }
 
 resource "aws_rds_cluster" "aurora_cluster" {
-  cluster_identifier = "aurora_cluster_instance"
+  cluster_identifier = "aurora-cluster-instance"
   engine = "aurora-mysql"
   engine_mode = "provisioned"
   engine_version = "8.0.mysql_aurora.3.06.0"
   database_name = var.database_name
   master_username = var.master_username
   master_password = var.master_password
-  backup_retention_period = 90
+  backup_retention_period = 7
   preferred_backup_window = "02:00-04:00"
   enable_http_endpoint = true
   skip_final_snapshot = true
