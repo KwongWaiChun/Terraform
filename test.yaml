@@ -1,0 +1,59 @@
+ AWSTemplateFormatVersion: "2010-09-09"
+ Resources:
+  AuroraSnapshotBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: aurora-snapshot-bucket
+
+  AuroraSnapshotSchedule:
+    Type: "AWS::Events::Rule"
+    Properties:
+        Name: "AuroraSnapshotSchedule"
+        Description: "Schedule Aurora cluster snapshot"
+        ScheduleExpression: "rate(1 day)"
+        State: "ENABLED"
+        Targets: 
+          - 
+            Arn: !GetAtt AuroraClusterSnapshotFunction.Arn
+            Id: "TargetFunctionV1"
+            Input:  !Sub |
+              {
+                "cluster_id": "${AuroraCluster}"
+              }
+
+  AuroraClusterSnapshotFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: AuroraClusterSnapshotFunction
+      Code:
+        ZipFile: |
+          import boto3
+          from datetime import datetime
+
+          def lambda_handler(event, context):
+            rds = boto3.client('rds')
+            s3 = boto3.resource('s3')
+            cluster_id = event['cluster_id']
+            current_time = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+            snapshot_id = f'snapshot-{cluster_id}-{current_time}'
+            response = rds.create_db_cluster_snapshot(DBClusterIdentifier=cluster_id, DBClusterSnapshotIdentifier=snapshot_id)
+            print(response)
+            
+            snapshot_filename = f'{snapshot_id}.sql'
+            s3.Object('aurora-snapshot-bucket', snapshot_filename).put(Body=response['DBClusterSnapshot']['DBClusterSnapshotArn'])
+
+      Handler: index.lambda_handler
+      Runtime: python3.8
+      Timeout: 60
+      Role: arn:aws:iam::235373209238:role/LabRole
+      TracingConfig: 
+        Mode: "PassThrough"
+  
+  AuroraClusterSnapshotFunctionPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref AuroraClusterSnapshotFunction
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt AuroraSnapshotSchedule.Arn

@@ -250,6 +250,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   master_username = var.master_username
   master_password = var.master_password
   backup_retention_period = 90
+  preferred_backup_window = "02:00-04:00"
   enable_http_endpoint = true
   skip_final_snapshot = true
   serverlessv2_scaling_configuration {
@@ -267,3 +268,8 @@ resource "aws_rds_cluster_instance" "aurora_cluster_instance" {
   engine             = aws_rds_cluster.aurora_cluster.engine
   engine_version     = aws_rds_cluster.aurora_cluster.engine_version
 }
+
+resource "aws_s3_bucket" "snapshot_bucket" {
+  bucket_prefix = "snapshot-bucket"
+}
+
