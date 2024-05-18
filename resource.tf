@@ -245,7 +245,8 @@ resource "aws_rds_cluster" "aurora_cluster" {
   cluster_identifier = "aurora-cluster-instance"
   engine = "aurora-mysql"
   engine_mode = "provisioned"
-  engine_version = "8.0.mysql_aurora.3.05.2"
+  engine_version = "8.0.mysql_aurora.3.06.0"
+  enable_http_endpoint = 
   database_name = var.database_name
   master_username = var.master_username
   master_password = var.master_password
@@ -253,11 +254,11 @@ resource "aws_rds_cluster" "aurora_cluster" {
   preferred_backup_window = "02:00-04:00"
   enable_http_endpoint = true
   skip_final_snapshot = true
+  storage_encrypted  = true
   serverlessv2_scaling_configuration {
     max_capacity = 8
     min_capacity = 0.5
   }
-  storage_encrypted = true
   db_subnet_group_name = aws_db_subnet_group.db_subnet_group.id
   vpc_security_group_ids = [aws_security_group.aurora_security_group.id]
 }
