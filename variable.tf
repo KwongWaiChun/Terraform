@@ -31,7 +31,7 @@ variable private_subnet2_cidr {
 variable database_name {
   description = "Name of the database"
   type        = string
-  default     = "MyDatabase"
+  default     = "AWSDatabase"
 }
 
 variable master_username {
