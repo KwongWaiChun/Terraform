@@ -127,8 +127,8 @@ resource "aws_security_group" "aurora_security_group" {
 resource "aws_vpc_security_group_ingress_rule" "aurora_security_group_ingress" {
   security_group_id = aws_security_group.aurora_security_group.id
   ip_protocol = "tcp"
-  from_port = 3306
-  to_port = 3306
+  from_port = 5432
+  to_port = 5432
   cidr_ipv4 = "0.0.0.0/0"
 }
 
