@@ -252,7 +252,6 @@ resource "aws_rds_cluster" "aurora_cluster" {
   master_password = var.master_password
   backup_retention_period = 7
   preferred_backup_window = "02:00-04:00"
-  enable_http_endpoint = true
   skip_final_snapshot = true
   storage_encrypted  = true
   serverlessv2_scaling_configuration {
