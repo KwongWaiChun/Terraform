@@ -37,11 +37,11 @@ variable database_name {
 variable master_username {
   description = "Username for the master user"
   type        = string
-  default     = "admin"
+  default     = "username"
 }
 
 variable master_password {
   description = "Password for the master user"
   type        = string
-  default     = "admin123"
+  default     = "userpw"
 }
