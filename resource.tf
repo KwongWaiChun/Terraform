@@ -243,6 +243,7 @@ resource "aws_instance" "ec2_instance2" {
 
 resource "aws_rds_cluster" "aurora_cluster" {
   cluster_identifier = "aurora-cluster-instance"
+  availability_zones = ["us-east-1a", "us-east-1b"]
   engine = "aurora-postgresql"
   engine_mode = "provisioned"
   engine_version = "16.1"
