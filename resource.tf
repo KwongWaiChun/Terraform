@@ -243,9 +243,9 @@ resource "aws_instance" "ec2_instance2" {
 
 resource "aws_rds_cluster" "aurora_cluster" {
   cluster_identifier = "aurora-cluster-instance"
-  engine = "aurora-mysql"
+  engine = "aurora-postgresql"
   engine_mode = "provisioned"
-  engine_version = "8.0.mysql_aurora.3.06.0"
+  engine_version = "16.1"
   database_name = var.database_name
   enable_http_endpoint = true
   master_username = var.master_username
