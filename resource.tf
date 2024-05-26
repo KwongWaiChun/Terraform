@@ -264,6 +264,8 @@ resource "aws_rds_cluster" "aurora_cluster" {
 }
 
 resource "aws_rds_cluster_instance" "aurora_cluster_instance" {
+  count              = 2
+  identifier         = "aurora-cluster-instance-${count.index}"
   cluster_identifier = aws_rds_cluster.aurora_cluster.id
   instance_class     = "db.serverless"
   engine             = aws_rds_cluster.aurora_cluster.engine
