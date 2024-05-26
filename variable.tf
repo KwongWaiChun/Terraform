@@ -43,5 +43,5 @@ variable master_username {
 variable master_password {
   description = "Password for the master user"
   type        = string
-  default     = "userpw"
+  default     = "userpassword"
 }
