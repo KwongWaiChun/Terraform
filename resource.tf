@@ -246,7 +246,6 @@ resource "aws_rds_cluster" "aurora_cluster" {
   engine = "aurora-mysql"
   engine_mode = "provisioned"
   engine_version = "8.0.mysql_aurora.3.06.0"
-  enable_http_endpoint = 
   database_name = var.database_name
   master_username = var.master_username
   master_password = var.master_password
