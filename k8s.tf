@@ -109,7 +109,7 @@ resource "kubernetes_secret" "ssh_tunnel" {
   data = {
     "ssh_host" = "3.234.247.158"
     "ssh_username" = "ec2-user"
-    "ssh_private_key" = file("labsuser.pem")
+    "ssh_private_key" = file("ec2-key.pem")
     "rds_host" = "aurora-cluster-instance.cluster-ctgmw0s8kx0u.us-east-1.rds.amazonaws.com"
     "rds_username" = "username"
     "rds_password" = "userpassword"
